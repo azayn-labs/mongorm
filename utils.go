@@ -2,26 +2,7 @@ package mongorm
 
 import (
 	"encoding/json"
-	"reflect"
-	"strings"
 )
-
-func convertToStruct[T any](input any) (T, error) {
-	var result T
-
-	switch v := input.(type) {
-	case string:
-		err := json.Unmarshal([]byte(v), &result)
-		return result, err
-	default:
-		bytes, err := json.Marshal(v)
-		if err != nil {
-			return result, err
-		}
-		err = json.Unmarshal(bytes, &result)
-		return result, err
-	}
-}
 
 func clonePtr[T any](src *T, reset bool) *T {
 	b, err := json.Marshal(src)
@@ -42,34 +23,6 @@ func clonePtr[T any](src *T, reset bool) *T {
 	return &dst
 }
 
-func getBSONName(f reflect.StructField) (name string, inline bool, ok bool) {
-	tag := f.Tag.Get("bson")
-
-	if tag == "-" {
-		return "", false, false
-	}
-
-	if tag == "" {
-		return f.Name, false, true
-	}
-
-	parts := strings.Split(tag, ",")
-
-	name = parts[0]
-
-	if name == "" {
-		name = f.Name
-	}
-
-	for _, p := range parts[1:] {
-		if p == "inline" {
-			return "", true, true
-		}
-	}
-
-	return name, false, true
-}
-
 // Function to check if the JSON contains a field.
 // Returns the content of the field and bool if the field exists and is not nil.
 func jsonContainsField(jsonData []byte, field string) (any, bool) {
@@ -84,13 +37,4 @@ func jsonContainsField(jsonData []byte, field string) (any, bool) {
 	}
 
 	return value, true
-}
-
-func fieldName(sf reflect.StructField) string {
-	tag := sf.Tag.Get("bson")
-	if tag == "" {
-		return sf.Name
-	}
-
-	return strings.Split(tag, ",")[0]
 }

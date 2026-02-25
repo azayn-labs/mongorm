@@ -1,19 +1,12 @@
 package mongorm
 
 import (
+	"maps"
 	"reflect"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
-
-func mergeMaps(one bson.M, two bson.M) bson.M {
-	for k, v := range two {
-		one[k] = v
-	}
-
-	return one
-}
 
 func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 	if value == nil {
@@ -82,7 +75,8 @@ func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 		} else {
 			currentSet, ok := m.operations.update["$set"].(bson.M)
 			if ok {
-				m.operations.update["$set"] = mergeMaps(currentSet, set)
+				maps.Copy(currentSet, set)
+				m.operations.update["$set"] = currentSet
 			}
 		}
 	}
@@ -162,7 +156,8 @@ func (m *MongORM[T]) Unset(value *T) *MongORM[T] {
 		} else {
 			currentUnset, ok := m.operations.update["$unset"].(bson.M)
 			if ok {
-				m.operations.update["$unset"] = mergeMaps(currentUnset, unset)
+				maps.Copy(currentUnset, unset)
+				m.operations.update["$unset"] = currentUnset
 			}
 		}
 

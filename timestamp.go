@@ -27,8 +27,10 @@ func (m *MongORM[T]) applyTimestamps() {
 	}
 
 	if f := v.FieldByName(createdField); f.IsValid() && f.CanSet() {
-		if f.Interface().(*time.Time) == nil || f.Interface().(*time.Time).IsZero() {
-			f.Set(reflect.ValueOf(&now))
+		if tI, ok := f.Interface().(*time.Time); ok {
+			if tI == nil || tI.IsZero() {
+				f.Set(reflect.ValueOf(&now))
+			}
 		}
 	}
 

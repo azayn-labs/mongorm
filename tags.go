@@ -36,18 +36,6 @@ func doesModelIncludeAnyModelFlags(tag reflect.StructTag, flags ...string) bool 
 	return false
 }
 
-func doesModelIncludeAllModelFlags(tag reflect.StructTag, flags ...string) bool {
-	tags := getModelTags(tag)
-
-	for _, flag := range flags {
-		if !slices.Contains(tags, flag) {
-			return false
-		}
-	}
-
-	return true
-}
-
 func getModelTags(tag reflect.StructTag) []string {
 	v := tag.Get("mongorm")
 	if v == "" {

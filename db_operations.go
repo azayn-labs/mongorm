@@ -33,7 +33,12 @@ func (m *MongORM[T]) Save(
 	}
 
 	if val, ok := jsonContainsField(jsonSchema, primaryFieldName); ok && val != nil {
-		id, err := bson.ObjectIDFromHex(val.(string))
+		str, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("primary field cannot be converted to string")
+		}
+
+		id, err := bson.ObjectIDFromHex(str)
 		if err != nil {
 			return err
 		}
@@ -97,7 +102,7 @@ func (m *MongORM[T]) SaveMulti(
 	return res, err
 }
 
-func (m *MongORM[T]) FindById(ctx context.Context) error {
+func (m *MongORM[T]) FindByID(ctx context.Context) error {
 	return m.First(ctx)
 }
 
@@ -114,7 +119,11 @@ func (m *MongORM[T]) First(
 		return fmt.Errorf("failed to marshal schema: %v", err)
 	}
 	if val, ok := jsonContainsField(jsonSchema, primaryFieldName); ok && val != nil {
-		id, err := bson.ObjectIDFromHex(val.(string))
+		str, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("primary field cannot be converted to string")
+		}
+		id, err := bson.ObjectIDFromHex(str)
 		if err != nil {
 			return err
 		}
