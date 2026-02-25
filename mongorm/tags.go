@@ -1,8 +1,8 @@
-package orm
+package mongorm
 
 type ModelTags string
 
 const (
-	ModelTagPrimary  ModelTags = "primary"
 	ModelTagReadonly ModelTags = "readonly"
+	ModelTagPrimary  ModelTags = "primary"
 )

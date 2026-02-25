@@ -1,6 +1,7 @@
-package orm
+package mongorm
 
 import (
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -14,17 +15,20 @@ type ModelOptions struct {
 type Model[T any] struct {
 	schema     *T
 	clone      *T
-	options    ModelOptions
+	options    *ModelOptions
 	db         *mongo.Database   `json:"-"`
 	collection *mongo.Collection `json:"-"`
+	query      bson.M            `json:"-"`
+	fields     map[string]Field  `json:"-"`
 }
 
-func NewModel[T any](schema *T, options ModelOptions) *Model[T] {
-
+func NewModel[T any](schema *T, options *ModelOptions) *Model[T] {
 	m := &Model[T]{
 		schema:  schema,
 		options: options,
 		clone:   clonePtr(schema, false),
+		query:   bson.M{},
+		fields:  buildFields[T](),
 	}
 
 	if options.DB != nil {

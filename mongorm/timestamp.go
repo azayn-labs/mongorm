@@ -1,4 +1,4 @@
-package orm
+package mongorm
 
 import (
 	"reflect"
@@ -11,7 +11,7 @@ type Timestamps struct {
 }
 
 func (m *Model[T]) applyTimestamps() {
-	v := reflect.ValueOf(m.schema).Elem()
+	v := reflect.ValueOf(m.clone).Elem()
 	now := time.Now()
 
 	// CreatedAt (set only if zero)

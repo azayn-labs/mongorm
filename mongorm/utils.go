@@ -1,4 +1,4 @@
-package orm
+package mongorm
 
 import (
 	"encoding/json"
@@ -57,24 +57,55 @@ func hasModelFlag(tag reflect.StructTag, flag string) bool {
 	return false
 }
 
-func getBSONName(f reflect.StructField) (string, bool) {
+func getBSONName(f reflect.StructField) (name string, inline bool, ok bool) {
 	tag := f.Tag.Get("bson")
+
 	if tag == "-" {
-		return "", false
+		return "", false, false
 	}
 
 	if tag == "" {
-		return f.Name, true
+		return f.Name, false, true
 	}
 
-	name := tag
-	if idx := strings.Index(tag, ","); idx >= 0 {
-		name = tag[:idx]
-	}
+	parts := strings.Split(tag, ",")
+
+	name = parts[0]
 
 	if name == "" {
 		name = f.Name
 	}
 
-	return name, true
+	for _, p := range parts[1:] {
+		if p == "inline" {
+			return "", true, true
+		}
+	}
+
+	return name, false, true
+}
+
+// Function to check if the JSON contains a field.
+// Returns the content of the field and bool if the field exists and is not nil.
+func jsonContainsField(jsonData []byte, field string) (any, bool) {
+	var data map[string]interface{}
+	if err := json.Unmarshal(jsonData, &data); err != nil {
+		return nil, false
+	}
+
+	value, exists := data[field]
+	if !exists || value == nil {
+		return nil, false
+	}
+
+	return value, true
+}
+
+func fieldName(sf reflect.StructField) string {
+	tag := sf.Tag.Get("bson")
+	if tag == "" {
+		return sf.Name
+	}
+
+	return strings.Split(tag, ",")[0]
 }

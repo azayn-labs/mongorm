@@ -1,4 +1,4 @@
-package orm
+package mongorm
 
 type BeforeSaveHook interface {
 	BeforeSave() error
