@@ -11,3 +11,5 @@ In this section, you will find all the available field types that you can use to
 - [BooleanField](../mongorm/primitives/bool.go)
 - [TimestampField](../mongorm/primitives/timestamp.go)
 - [GenericField](../mongorm/primitives/generic.go)
+
+> You can also check for the query methods inside each file to see the available query methods.
