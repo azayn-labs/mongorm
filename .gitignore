@@ -1,3 +1,30 @@
-# Test files
-*_test.go
-test.go
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary (go test -c)
+*.test
+
+# Build output
+*.out
+*.o
+*.a
+
+# Coverage files
+*.cover
+coverage.out
+coverage.html
+
+# Vendor directory (ONLY if you don't commit vendor/)
+vendor/
+
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

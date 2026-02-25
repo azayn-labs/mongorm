@@ -42,21 +42,6 @@ func clonePtr[T any](src *T, reset bool) *T {
 	return &dst
 }
 
-func hasModelFlag(tag reflect.StructTag, flag string) bool {
-	v := tag.Get("mongorm")
-	if v == "" {
-		return false
-	}
-
-	for _, f := range strings.Split(v, ",") {
-		if strings.TrimSpace(f) == flag {
-			return true
-		}
-	}
-
-	return false
-}
-
 func getBSONName(f reflect.StructField) (name string, inline bool, ok bool) {
 	tag := f.Tag.Get("bson")
 

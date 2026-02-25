@@ -4,12 +4,12 @@ In this section, you will find all the available field types that you can use to
 
 ## Available Field Types
 
-- [ObjectIDField](../mongorm/primitives/oid.go)
-- [StringField](../mongorm/primitives/string.go)
-- [Int64Field](../mongorm/primitives/int.go)
-- [Float64Field](../mongorm/primitives/float.go)
-- [BooleanField](../mongorm/primitives/bool.go)
-- [TimestampField](../mongorm/primitives/timestamp.go)
-- [GenericField](../mongorm/primitives/generic.go)
+- [ObjectIDField](../primitives/oid.go)
+- [StringField](../primitives/string.go)
+- [Int64Field](../primitives/int.go)
+- [Float64Field](../primitives/float.go)
+- [BooleanField](../primitives/bool.go)
+- [TimestampField](../primitives/timestamp.go)
+- [GenericField](../primitives/generic.go)
 
 > You can also check for the query methods inside each file to see the available query methods.

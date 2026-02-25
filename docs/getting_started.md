@@ -27,7 +27,7 @@ The field names should match the field names of the model. You can find more det
 ```go
 package main
 
-import "github.com/CdTgr/mongorm/mongorm/primitives"
+import "github.com/CdTgr/mongorm/primitives"
 
 type ToDoSchema struct {
  ID   *primitives.ObjectIDField
@@ -52,8 +52,8 @@ _Example:_
 package main
 
 import (
-  "github.com/CdTgr/mongorm/mongorm"
-  "github.com/CdTgr/mongorm/mongorm/primitives"
+  "github.com/CdTgr/mongorm"
+  "github.com/CdTgr/mongorm/primitives"
   "go.mongodb.org/mongo-driver/v2/bson"
 )
 

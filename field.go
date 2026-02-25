@@ -1,11 +1,10 @@
 package mongorm
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/CdTgr/mongorm/mongorm/primitives"
+	"github.com/CdTgr/mongorm/primitives"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -78,8 +77,6 @@ func NewFieldFromType(t reflect.Type, name string) Field {
 	case "Time":
 		return primitives.TimestampType(name)
 	}
-
-	fmt.Printf("Type %+v, Kind %+v, Elem %+v\n", name, t.Kind(), t.Name())
 
 	return primitives.GenericType(name)
 }

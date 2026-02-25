@@ -7,8 +7,8 @@ import (
  "context"
  "fmt"
 
- "github.com/CdTgr/mongorm/mongorm"
- "github.com/CdTgr/mongorm/mongorm/primitives"
+ "github.com/CdTgr/mongorm"
+ "github.com/CdTgr/mongorm/primitives"
  "go.mongodb.org/mongo-driver/v2/bson"
  "go.mongodb.org/mongo-driver/v2/mongo"
  "go.mongodb.org/mongo-driver/v2/mongo/options"
