@@ -137,7 +137,7 @@ type ToDo struct {
 
 Behavior:
 
-- On insert, version initializes to `1`.
+- On insert, if `_version` is unset, nil, or `<= 0`, MongORM initializes it to `1`. If you provide a positive `_version` value explicitly, that value is preserved.
 - On update (`Save()` / `Update()`), MongORM matches by current `_version` and increments it atomically.
 - If the version is stale, update fails with `ErrOptimisticLockConflict`.
 
