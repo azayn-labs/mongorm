@@ -329,7 +329,7 @@ func AggregateAs[T any, R any](
 		if closeErr := cursor.Close(ctx); closeErr != nil {
 			return nil, errors.Join(err, normalizeError(closeErr))
 		}
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	if err := cursor.Close(ctx); err != nil {
