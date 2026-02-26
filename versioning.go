@@ -136,7 +136,7 @@ func (m *MongORM[T]) applyOptimisticLock(filter *bson.M, update *bson.M) (bool, 
 
 	current, hasValue, err := readVersionValue(field)
 	if err != nil {
-		return true, err
+		return false, err
 	}
 	if !hasValue || current <= 0 {
 		return false, nil
