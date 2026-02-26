@@ -3,11 +3,9 @@ package mongorm
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"maps"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
@@ -171,11 +169,7 @@ func (m *MongORM[T]) updateOne(
 		update,
 		opts...,
 	).Decode(&doc); err != nil {
-		if optimisticLockEnabled && errors.Is(err, mongo.ErrNoDocuments) {
-			return errors.Join(ErrOptimisticLockConflict, err)
-		}
-
-		return normalizeError(err)
+		return mapUpdateOneError(err, optimisticLockEnabled)
 	}
 
 	if err := m.applySchema(&doc); err != nil {
