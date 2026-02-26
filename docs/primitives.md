@@ -18,6 +18,7 @@ import "github.com/CdTgr/mongorm/primitives"
 | `Float64Field` | `float64` | Floating-point fields (also handles float32) |
 | `BoolField` | `bool` | Boolean fields |
 | `TimestampField` | `time.Time` | Date/time fields |
+| `GeoField` | `mongorm.GeoPoint` / `mongorm.GeoLineString` / `mongorm.GeoPolygon` | Geospatial fields |
 | `GenericField` | any | Fallback for unmapped types (only `BSONName()` available) |
 
 ---
@@ -33,7 +34,7 @@ type ToDoSchema struct {
 var ToDoFields = mongorm.FieldsOf[ToDo, ToDoSchema]()
 ```
 
-### Methods
+### ObjectID Methods
 
 | Method | MongoDB operator | Description |
 | --- | --- | --- |
@@ -61,7 +62,7 @@ orm.Where(ToDoFields.ID.In(id1, id2, id3))
 
 **Package:** `primitives.StringField`
 
-### Methods
+### String Methods
 
 | Method | MongoDB operator | Description |
 | --- | --- | --- |
@@ -88,7 +89,7 @@ orm.Where(ToDoFields.Text.Reg("groceries$")) // ends with "groceries"
 
 Handles `int64`, `int32`, `int8`, and `int` model fields.
 
-### Methods
+### Int64 Methods
 
 | Method | MongoDB operator | Description |
 | --- | --- | --- |
@@ -118,7 +119,7 @@ orm.Where(TaskFields.Count.In(1, 2, 5))
 
 Handles `float64` and `float32` model fields.
 
-### Methods
+### Float64 Methods
 
 | Method | MongoDB operator | Description |
 | --- | --- | --- |
@@ -145,7 +146,7 @@ orm.Where(ProductFields.Price.Lt(99.99))
 
 **Package:** `primitives.BoolField`
 
-### Methods
+### Bool Methods
 
 | Method | MongoDB operator | Description |
 | --- | --- | --- |
@@ -168,7 +169,7 @@ orm.Where(ToDoFields.Done.Eq(false))
 
 **Package:** `primitives.TimestampField`
 
-### Methods
+### Timestamp Methods
 
 | Method | MongoDB operator | Description |
 | --- | --- | --- |
@@ -188,6 +189,51 @@ orm.Where(ToDoFields.Done.Eq(false))
 ```go
 cutoff := time.Now().Add(-24 * time.Hour)
 orm.Where(ToDoFields.CreatedAt.Gte(cutoff))
+```
+
+---
+
+## GeoField
+
+**Package:** `primitives.GeoField`
+
+Use `GeoField` for geospatial queries.
+
+### Supported model types
+
+- `*mongorm.GeoPoint`
+- `*mongorm.GeoLineString`
+- `*mongorm.GeoPolygon`
+
+### Geo Methods
+
+| Method | MongoDB operator | Description |
+| --- | --- | --- |
+| `Eq(v any)` | `$eq` | Equals geometry |
+| `Ne(v any)` | `$ne` | Not equals geometry |
+| `Near(geometry any)` | `$near` | Near geometry |
+| `NearWithDistance(geometry, min, max)` | `$near` | Near with min/max distance |
+| `NearSphere(geometry any)` | `$nearSphere` | Spherical near |
+| `NearSphereWithDistance(geometry, min, max)` | `$nearSphere` | Spherical near with min/max distance |
+| `Within(geometry any)` | `$geoWithin` | Within geometry |
+| `WithinBox(bottomLeft, upperRight)` | `$geoWithin/$box` | Within box |
+| `WithinCenter(center, radius)` | `$geoWithin/$center` | Within flat circle |
+| `WithinCenterSphere(center, radius)` | `$geoWithin/$centerSphere` | Within spherical circle |
+| `Intersects(geometry any)` | `$geoIntersects` | Geometry intersection |
+| `Exists()` | `$exists: true` | Field exists |
+| `NotExists()` | `$exists: false` | Field does not exist |
+| `IsNull()` | `$eq: null` | Field is null |
+| `IsNotNull()` | `$ne: null` | Field is not null |
+
+```go
+point := mongorm.NewGeoPoint(12.9716, 77.5946)
+
+orm.Where(ToDoFields.Location.Near(point))
+
+cityBounds := mongorm.NewGeoPolygon(
+    [][]float64{{77.4, 12.8}, {77.8, 12.8}, {77.8, 13.1}, {77.4, 13.1}, {77.4, 12.8}},
+)
+orm.Where(ToDoFields.Location.Within(cityBounds))
 ```
 
 ---

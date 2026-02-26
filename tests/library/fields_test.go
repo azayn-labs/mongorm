@@ -21,6 +21,10 @@ func ValidateFieldsOf(t *testing.T) {
 		t.Fatal("expected Count field with bson count")
 	}
 
+	if ToDoFields.Location == nil || ToDoFields.Location.BSONName() != "location" {
+		t.Fatal("expected Location field with bson location")
+	}
+
 	if ToDoFields.CreatedAt == nil || ToDoFields.CreatedAt.BSONName() != "createdAt" {
 		t.Fatal("expected CreatedAt field with bson createdAt")
 	}

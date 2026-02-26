@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CdTgr/mongorm"
 	"github.com/CdTgr/mongorm/primitives"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -48,5 +49,22 @@ func ValidatePrimitiveQueries(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	if !reflect.DeepEqual(createdAt.Gte(now), bson.M{"createdAt": bson.M{"$gte": now}}) {
 		t.Fatal("unexpected Timestamp Gte query")
+	}
+
+	location := primitives.GeoType("location")
+	point := mongorm.NewGeoPoint(10.5, 20.25)
+	if !reflect.DeepEqual(location.Near(point), bson.M{"location": bson.M{"$near": bson.M{"$geometry": point}}}) {
+		t.Fatal("unexpected Geo Near query")
+	}
+
+	polygon := mongorm.NewGeoPolygon(
+		[][]float64{{10, 10}, {20, 10}, {20, 20}, {10, 20}, {10, 10}},
+	)
+	if !reflect.DeepEqual(location.Within(polygon), bson.M{"location": bson.M{"$geoWithin": bson.M{"$geometry": polygon}}}) {
+		t.Fatal("unexpected Geo Within query")
+	}
+
+	if !reflect.DeepEqual(location.Intersects(polygon), bson.M{"location": bson.M{"$geoIntersects": bson.M{"$geometry": polygon}}}) {
+		t.Fatal("unexpected Geo Intersects query")
 	}
 }

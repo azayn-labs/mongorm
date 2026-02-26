@@ -46,6 +46,7 @@ import "github.com/CdTgr/mongorm/primitives"
 type ToDoSchema struct {
     ID        *primitives.ObjectIDField
     Text      *primitives.StringField
+    Location  *primitives.GeoField
     CreatedAt *primitives.TimestampField
     UpdatedAt *primitives.TimestampField
 }
@@ -117,6 +118,21 @@ orm  := mongorm.FromOptions(todo, opts)
 Struct tags and `MongORMOptions` can be combined. `MongORMOptions` values take precedence.
 
 See [Configuration](./configuration.md) for full details.
+
+## Geo Index Defaults
+
+For geo-enabled models, create a baseline `2dsphere` index and an optional supporting index in one call:
+
+```go
+_, err := mongorm.New(&ToDo{}).EnsureGeoDefaults(
+    ctx,
+    ToDoFields.Location,
+    []bson.E{mongorm.Asc(ToDoFields.CreatedAt)},
+)
+if err != nil {
+    panic(err)
+}
+```
 
 ## Quick Example
 
