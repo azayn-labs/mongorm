@@ -51,7 +51,7 @@ func (m *MongORM[T]) SaveMulti(
 		return nil, normalizeError(err)
 	}
 
-	return res, err
+	return res, nil
 }
 
 // FindAll retrieves all documents that match the specified query criteria and returns
