@@ -147,6 +147,10 @@ func TestMain(t *testing.T) {
 		ValidateLibraryErrorTaxonomy(t)
 	})
 
+	t.Run("Versioning configuration safety", func(t *testing.T) {
+		ValidateLibraryVersioningConfigSafety(t)
+	})
+
 	t.Run("Bulk write", func(t *testing.T) {
 		ValidateLibraryBulkWrite(t)
 	})
