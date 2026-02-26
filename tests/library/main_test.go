@@ -135,6 +135,10 @@ func TestMain(t *testing.T) {
 		ValidateLibraryTransactions(t)
 	})
 
+	t.Run("Bulk write", func(t *testing.T) {
+		ValidateLibraryBulkWrite(t)
+	})
+
 	t.Run("Aggregate TODOs by text", func(t *testing.T) {
 		aggText := "aggregate-check-" + time.Now().Format(time.RFC3339Nano)
 		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(aggText), Done: mongorm.Bool(false), Count: 1})
