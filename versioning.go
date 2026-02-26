@@ -139,7 +139,7 @@ func (m *MongORM[T]) applyOptimisticLock(filter *bson.M, update *bson.M) (bool, 
 		return false, err
 	}
 	if !hasValue || current <= 0 {
-		return false, nil
+		return false, configErrorf("version field exists but has no positive value; populate the version before updating")
 	}
 
 	(*filter)[versionKey] = current
