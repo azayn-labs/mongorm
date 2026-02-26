@@ -29,6 +29,7 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 
 - [Hooks](./hooks.md) — Lifecycle hooks for all CRUD operations
 - [Transactions](./transactions.md) — Execute operations in an atomic multi-step transaction
+- [Errors](./errors.md) — Sentinel error taxonomy for consistent application handling
 - [Timestamps](./timestamps.md) — Automatic `CreatedAt` / `UpdatedAt` management
 - [Utility Types](./types.md) — Pointer helpers: `String()`, `Bool()`, `Int64()`, `Timestamp()`
 

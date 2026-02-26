@@ -123,6 +123,24 @@ See [Timestamps](./timestamps.md) for more details.
 
 Use `SaveMulti()` when you explicitly want to update many documents and do not want insert behaviour.
 
+## Optimistic Locking with `_version`
+
+Add a version field with `mongorm:"version"` to enable optimistic locking on single-document updates:
+
+```go
+type ToDo struct {
+    ID      *bson.ObjectID `bson:"_id,omitempty" mongorm:"primary"`
+    Version int64          `bson:"_version,omitempty" mongorm:"version"`
+    Text    *string        `bson:"text,omitempty"`
+}
+```
+
+Behavior:
+
+- On insert, version initializes to `1`.
+- On update (`Save()` / `Update()`), MongORM matches by current `_version` and increments it atomically.
+- If the version is stale, update fails with `ErrOptimisticLockConflict`.
+
 ---
 
 [Back to Documentation Index](./index.md) | [README](../README.md)

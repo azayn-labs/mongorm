@@ -114,6 +114,33 @@ orm.WhereBy(ToDoFields.Text, "Buy groceries")
 
 To retrieve multiple documents, use `FindAll()` which returns a cursor. See [Cursors](./cursors.md) for details.
 
+## Typed Projection Targets
+
+Use `Projection(...)` together with `FindOneAs[T, R]` or `FindAllAs[T, R]` to decode partial documents into DTOs:
+
+```go
+type ToDoPreview struct {
+    Text  *string `bson:"text,omitempty"`
+    Count int64   `bson:"count,omitempty"`
+}
+
+model := mongorm.New(&ToDo{})
+model.Where(ToDoFields.Text.Reg("^buy")).
+    Projection(bson.M{ToDoFields.Text.BSONName(): 1, ToDoFields.Count.BSONName(): 1})
+
+one, err := mongorm.FindOneAs[ToDo, ToDoPreview](model, ctx)
+if err != nil {
+    panic(err)
+}
+
+many, err := mongorm.FindAllAs[ToDo, ToDoPreview](model, ctx)
+if err != nil {
+    panic(err)
+}
+
+fmt.Println(one, len(many))
+```
+
 ## Count Documents
 
 Use `Count()` to get the number of documents matching current filters.
