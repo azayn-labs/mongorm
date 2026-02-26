@@ -111,6 +111,10 @@ func (m *MongORM[T]) Save(
 			return err
 		}
 
+		if len(m.operations.update) == 0 {
+			return configErrorf("no update operations specified")
+		}
+
 		// Update existing document
 		if hook, ok := schema.(BeforeSaveHook[T]); ok {
 			if err := hook.BeforeSave(m, &filter); err != nil {

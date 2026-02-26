@@ -2,6 +2,7 @@ package mongorm
 
 import (
 	"context"
+	"maps"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -73,10 +74,10 @@ func (m *MongORM[T]) MatchWhere() *MongORM[T] {
 		return m
 	}
 
-	query := bson.M{}
-	for key, value := range m.operations.query {
-		query[key] = value
-	}
+	query := maps.Clone(m.operations.query)
+
+	// Consume the accumulated query so it is not applied again (e.g. by AggregateRaw).
+	m.operations.query = bson.M{}
 
 	return m.MatchStage(query)
 }

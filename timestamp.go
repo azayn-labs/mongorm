@@ -20,36 +20,30 @@ func (m *MongORM[T]) applyTimestamps() {
 	v := reflect.ValueOf(m.schema).Elem()
 	now := time.Now()
 
-	createdField, _, err := m.getFieldByTag(ModelTagTimestampCreatedAt)
-	if err != nil {
-		return
-	}
-
-	updatedField, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
-	if err != nil {
-		return
-	}
-
-	if f := v.FieldByName(createdField); f.IsValid() && f.CanSet() {
-		if tI, ok := f.Interface().(*time.Time); ok {
-			if tI == nil || tI.IsZero() {
-				f.Set(reflect.ValueOf(&now))
+	if createdField, _, err := m.getFieldByTag(ModelTagTimestampCreatedAt); err == nil {
+		if f := v.FieldByName(createdField); f.IsValid() && f.CanSet() {
+			if tI, ok := f.Interface().(*time.Time); ok {
+				if tI == nil || tI.IsZero() {
+					f.Set(reflect.ValueOf(&now))
+				}
 			}
 		}
 	}
 
-	if f := v.FieldByName(updatedField); f.IsValid() && f.CanSet() {
-		f.Set(reflect.ValueOf(&now))
-		if m.operations.update["$set"] == nil {
-			if m.operations.update == nil {
-				m.operations.update = bson.M{}
-			}
+	if updatedField, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt); err == nil {
+		if f := v.FieldByName(updatedField); f.IsValid() && f.CanSet() {
+			f.Set(reflect.ValueOf(&now))
+			if m.operations.update["$set"] == nil {
+				if m.operations.update == nil {
+					m.operations.update = bson.M{}
+				}
 
-			m.operations.update["$set"] = bson.M{updatedFieldName: now}
-		} else {
-			set, ok := m.operations.update["$set"].(bson.M)
-			if ok {
-				set[updatedFieldName] = now
+				m.operations.update["$set"] = bson.M{updatedFieldName: now}
+			} else {
+				set, ok := m.operations.update["$set"].(bson.M)
+				if ok {
+					set[updatedFieldName] = now
+				}
 			}
 		}
 	}
@@ -89,7 +83,7 @@ func (m *MongORM[T]) setTimestampRequirementsFromSchema() error {
 		}
 	}
 
-	if counter > 1 {
+	if counter > 0 {
 		m.options.Timestamps = true
 	}
 
