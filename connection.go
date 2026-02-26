@@ -45,7 +45,7 @@ func (m *MongORM[T]) initializeClient() error {
 	}
 
 	if client == nil {
-		return fmt.Errorf("mongodb client connection is not provided in options or schema")
+		return configErrorf("mongodb client connection is not provided in options or schema")
 	}
 
 	if m.options != nil && m.options.DatabaseName != nil {
@@ -57,7 +57,7 @@ func (m *MongORM[T]) initializeClient() error {
 	}
 
 	if m.info.db == nil {
-		return fmt.Errorf("mongodb database is not provided in options or schema")
+		return configErrorf("mongodb database is not provided in options or schema")
 	}
 
 	m.info.dbName = String(m.info.db.Name())
@@ -71,7 +71,7 @@ func (m *MongORM[T]) initializeClient() error {
 	}
 
 	if m.info.collection == nil {
-		return fmt.Errorf("mongodb collection is not provided in options or schema")
+		return configErrorf("mongodb collection is not provided in options or schema")
 	}
 
 	if err := m.setTimestampRequirementsFromSchema(); err != nil {
@@ -112,7 +112,7 @@ func (m *MongORM[T]) getClientFromSchema() (*mongo.Client, error) {
 		return nil, err
 	}
 	if connectionString == nil {
-		return nil, fmt.Errorf("connection string was not provided for database connection")
+		return nil, configErrorf("connection string was not provided for database connection")
 	}
 
 	if connections[*connectionString] != nil {
@@ -121,7 +121,7 @@ func (m *MongORM[T]) getClientFromSchema() (*mongo.Client, error) {
 
 	client, err := NewClient(*connectionString)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create mongodb client: %w", err)
+		return nil, normalizeError(err)
 	}
 
 	connections[*connectionString] = client
@@ -157,7 +157,7 @@ func (m *MongORM[T]) setDatabaseFromSchema(client *mongo.Client) error {
 
 func (m *MongORM[T]) setCollectionFromSchema() error {
 	if m.info.db == nil {
-		return fmt.Errorf("database is not configured")
+		return configErrorf("database is not configured")
 	}
 
 	ref := reflect.ValueOf(m.schema).Elem()

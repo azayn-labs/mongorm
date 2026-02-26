@@ -3,10 +3,11 @@ package mongorm
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"maps"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
@@ -65,7 +66,7 @@ func (m *MongORM[T]) updateSchema(ctx context.Context, id *bson.ObjectID) error 
 
 	var doc T
 	if err := m.info.collection.FindOne(ctx, filter).Decode(&doc); err != nil {
-		return err
+		return normalizeError(err)
 	}
 
 	if hook, ok := schema.(AfterFindHook[T]); ok {
@@ -91,6 +92,10 @@ func (m *MongORM[T]) updateSchema(ctx context.Context, id *bson.ObjectID) error 
 //	    // Document inserted successfully
 //	}
 func (m *MongORM[T]) insertOne(ctx context.Context) error {
+	if err := m.initializeVersionForInsert(); err != nil {
+		return err
+	}
+
 	schema := any(m.schema)
 	if hook, ok := schema.(BeforeCreateHook[T]); ok {
 		if err := hook.BeforeCreate(m); err != nil {
@@ -100,12 +105,12 @@ func (m *MongORM[T]) insertOne(ctx context.Context) error {
 
 	ins, err := m.info.collection.InsertOne(ctx, m.schema)
 	if err != nil {
-		return err
+		return normalizeError(err)
 	}
 
 	id, ok := ins.InsertedID.(bson.ObjectID)
 	if !ok {
-		return fmt.Errorf("Invalid document from database: missing identifier")
+		return configErrorf("invalid document from database: missing identifier")
 	}
 
 	if err := m.updateSchema(ctx, &id); err != nil {
@@ -140,6 +145,7 @@ func (m *MongORM[T]) updateOne(
 	ctx context.Context,
 	filter *bson.M,
 	update *bson.M,
+	optimisticLockEnabled bool,
 	opts ...options.Lister[options.FindOneAndUpdateOptions],
 ) error {
 	var doc T
@@ -165,7 +171,11 @@ func (m *MongORM[T]) updateOne(
 		update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(&doc); err != nil {
-		return err
+		if optimisticLockEnabled && errors.Is(err, mongo.ErrNoDocuments) {
+			return errors.Join(ErrOptimisticLockConflict, err)
+		}
+
+		return normalizeError(err)
 	}
 
 	if err := m.applySchema(&doc); err != nil {
@@ -215,7 +225,7 @@ func (m *MongORM[T]) findOne(
 		filter,
 		opts...,
 	).Decode(&doc); err != nil {
-		return err
+		return normalizeError(err)
 	}
 
 	if err := m.applySchema(&doc); err != nil {
@@ -258,11 +268,11 @@ func (m *MongORM[T]) deleteOne(
 
 	res, err := m.info.collection.DeleteOne(ctx, filter)
 	if err != nil {
-		return err
+		return normalizeError(err)
 	}
 
 	if res.DeletedCount == 0 {
-		return fmt.Errorf("no document found to delete")
+		return ErrNotFound
 	}
 
 	m.reset() // clear all
@@ -296,13 +306,13 @@ func (m *MongORM[T]) withPrimaryFilters() (bson.M, *bson.ObjectID, error) {
 	}
 	jsonSchema, err := json.Marshal(m.schema)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to marshal schema: %v", err)
+		return nil, nil, configErrorf("failed to marshal schema: %v", err)
 	}
 
 	if val, ok := jsonContainsField(jsonSchema, primaryFieldName); ok && val != nil {
 		str, ok := val.(string)
 		if !ok {
-			return nil, nil, fmt.Errorf("primary field cannot be converted to string")
+			return nil, nil, configErrorf("primary field cannot be converted to string")
 		}
 
 		id, err := bson.ObjectIDFromHex(str)
