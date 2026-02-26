@@ -11,6 +11,7 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 - Query utilities: `Count()`, `Distinct()`, `DistinctFieldAs[T, V]()`, `DistinctStrings()`, `DistinctInt64()`, `DistinctBool()`, `DistinctFloat64()`, `DistinctObjectIDs()`, and `DistinctTimes()`
 - Geospatial support: `GeoField` with `Near`, `Within`, and `Intersects` query helpers
 - Index support: field-driven builders, `Ensure2DSphereIndex()`, and `EnsureGeoDefaults()`
+- Transactions: `WithTransaction()` for atomic multi-operation workflows
 - Lifecycle hooks for every operation (Before/After Create, Save, Update, Find, Delete, Finalize)
 - Automatic `CreatedAt` / `UpdatedAt` timestamp management
 - Flexible configuration: struct tags, options struct, or both
@@ -100,6 +101,7 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Query Building](./docs/query_building.md) | `Where()`, find modifiers, pagination helpers, `Set()`, `Unset()` |
 | [Primitives](./docs/primitives.md) | Type-safe field query methods |
 | [Hooks](./docs/hooks.md) | Lifecycle hooks |
+| [Transactions](./docs/transactions.md) | Running operations in MongoDB transactions |
 | [Timestamps](./docs/timestamps.md) | Automatic `CreatedAt` / `UpdatedAt` |
 | [Utility Types](./docs/types.md) | Pointer helpers |
 
