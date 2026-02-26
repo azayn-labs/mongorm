@@ -1,5 +1,7 @@
 package mongorm
 
+import "go.mongodb.org/mongo-driver/v2/bson"
+
 // clone creates a deep copy of the MongORM instance, including its schema and operations.
 // This is useful for creating a new instance with the same connection and collection
 // information, but without any accumulated state from previous operations.
@@ -8,7 +10,10 @@ package mongorm
 func (m *MongORM[T]) clone() *MongORM[T] {
 	p := clonePtr(m, false)
 	p.schema = clonePtr(m.schema, true)
-	p.operations.reset()
+	p.operations = &MongORMOperations{
+		query:  bson.M{},
+		update: bson.M{},
+	}
 
 	return p
 }
@@ -20,6 +25,9 @@ func (m *MongORM[T]) clone() *MongORM[T] {
 //
 // > NOTE: This method is not intended for public use.
 func (m *MongORM[T]) reset() {
-	m.operations.reset()
+	m.operations = &MongORMOperations{
+		query:  bson.M{},
+		update: bson.M{},
+	}
 	m.schema = nil
 }

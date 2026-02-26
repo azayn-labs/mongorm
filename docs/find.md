@@ -1,31 +1,119 @@
-# Finding a document
+# Finding Documents
 
-Finding a document is as simple as calling the `find` method on the model. You can find a single document by its ID or by any other field.
-Here is where the ORM really shines, as it allows you to use the same syntax for almost all the operations, making it very intuitive to use.
+Use `First()` (or its alias `Find()`) to retrieve a single document matching your filter. Build the filter using `Where()` with type-safe field methods from the schema.
 
-## Basic Usage
+## Find by Primary Key
+
+The most common pattern — query by `ObjectID`:
 
 ```go
-...
-...
+package main
 
-// Create a new ToDo instance
-todo := &ToDo{}
+import (
+    "context"
+    "errors"
+    "fmt"
 
-// Create a new model instance
-orm := mongorm.NewModel(todo, options)
+    "github.com/CdTgr/mongorm"
+    "github.com/CdTgr/mongorm/primitives"
+    "go.mongodb.org/mongo-driver/v2/bson"
+    "go.mongodb.org/mongo-driver/v2/mongo"
+)
 
-// Use your ObjectID reference
-myId := bson.NewObjectID() // NewObjectID() is just an example.
+type ToDo struct {
+    ID   *bson.ObjectID `bson:"_id,omitempty" mongorm:"primary"`
+    Text *string        `bson:"text,omitempty"`
 
-// Query the database using the ORM
-orm.Where(ToDoFields.ID.Eq(myId))
-
-if err := orm.First(context.TODO()); err != nil {
-  panic(err)
+    connectionString *string `mongorm:"mongodb://localhost:27017,connection:url"`
+    database         *string `mongorm:"mydb,connection:database"`
+    collection       *string `mongorm:"todos,connection:collection"`
 }
 
-fmt.Printf("Found document %+v\n", todo)
+type ToDoSchema struct {
+    ID   *primitives.ObjectIDField
+    Text *primitives.StringField
+}
+
+var ToDoFields = mongorm.FieldsOf[ToDo, ToDoSchema]()
+
+func main() {
+    ctx := context.Background()
+
+    targetID := bson.NewObjectID() // use a real ID in production
+
+    todo := &ToDo{}
+    orm  := mongorm.New(todo)
+    orm.Where(ToDoFields.ID.Eq(targetID))
+
+    if err := orm.First(ctx); err != nil {
+        if errors.Is(err, mongo.ErrNoDocuments) {
+            fmt.Println("Document not found")
+        } else {
+            panic(err)
+        }
+        return
+    }
+
+    fmt.Printf("Found: %+v\n", todo)
+}
 ```
 
-All the primitive operations can be found in the [Primitives](./primitives.md) section.
+After a successful call, the `todo` struct is populated with the data from the database.
+
+## Find by Field Value
+
+```go
+todo := &ToDo{}
+orm  := mongorm.New(todo)
+orm.Where(ToDoFields.Text.Eq("Buy groceries"))
+
+if err := orm.First(ctx); err != nil {
+    panic(err)
+}
+```
+
+## Find by Regex Pattern
+
+```go
+todo := &ToDo{}
+orm  := mongorm.New(todo)
+orm.Where(ToDoFields.Text.Reg("groceries$")) // matches text ending with "groceries"
+
+if err := orm.First(ctx); err != nil {
+    panic(err)
+}
+```
+
+## Chaining Multiple Filters
+
+Multiple `Where()` calls are combined with `$and`:
+
+```go
+orm.Where(ToDoFields.Text.Reg("buy")).
+    Where(ToDoFields.CreatedAt.Gte(cutoff))
+```
+
+## Find() vs First()
+
+`Find()` is an alias for `First()`. Both retrieve one document and populate the schema pointer.
+
+```go
+err := orm.Find(ctx)   // same as orm.First(ctx)
+err := orm.First(ctx)
+```
+
+## WhereBy
+
+`WhereBy` is a lower-level alternative that accepts any `Field` and a raw value:
+
+```go
+orm.WhereBy(ToDoFields.Text, "Buy groceries")
+```
+
+## Find All Documents
+
+To retrieve multiple documents, use `FindAll()` which returns a cursor. See [Cursors](./cursors.md) for details.
+
+---
+
+[Back to Documentation Index](./index.md) | [README](../README.md)

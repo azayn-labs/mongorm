@@ -1,13 +1,33 @@
-# Documentation
+# MongORM Documentation
 
-You will find all the details on how to use the MongORM libraray here.
+MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a fluent API for defining models and performing CRUD operations using Go generics and struct tags.
 
 ## Menu
 
-- [Getting Started](./getting_started.md)
-- [Creating a document](./create.md)
-- [Finding a document](./find.md)
+### Getting Started
+
+- [Getting Started](./getting_started.md) — Installation, model definition, schema setup, and first steps
+- [Configuration](./configuration.md) — Struct tag configuration, options struct, and mixed mode
+
+### CRUD Operations
+
+- [Creating Documents](./create.md) — Inserting new documents with `Save()`
+- [Finding Documents](./find.md) — Querying single documents with `First()` / `Find()`
+- [Updating Documents](./update.md) — Updating single or multiple documents
+- [Deleting Documents](./delete.md) — Removing documents from a collection
+- [Cursors](./cursors.md) — Iterating over multiple results with `FindAll()`
+
+### Query Building
+
+- [Query Building](./query_building.md) — Using `Where()`, `WhereBy()`, `Set()`, and `Unset()`
+- [Primitives](./primitives.md) — Type-safe field types and their query methods
+
+### Advanced
+
+- [Hooks](./hooks.md) — Lifecycle hooks for all CRUD operations
+- [Timestamps](./timestamps.md) — Automatic `CreatedAt` / `UpdatedAt` management
+- [Utility Types](./types.md) — Pointer helpers: `String()`, `Bool()`, `Int64()`, `Timestamp()`
 
 ---
----
+
 [README](../README.md)
