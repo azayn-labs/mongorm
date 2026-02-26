@@ -90,6 +90,10 @@ func TestMain(t *testing.T) {
 		FindLibraryTodoWithSortLimitSkipProjection(t)
 	})
 
+	t.Run("Find with typed projection", func(t *testing.T) {
+		FindLibraryTodoWithTypedProjection(t)
+	})
+
 	t.Run("DeleteMulti TODOs by text", func(t *testing.T) {
 		bulkText := "bulk-delete-" + time.Now().Format(time.RFC3339Nano)
 
@@ -133,6 +137,14 @@ func TestMain(t *testing.T) {
 
 	t.Run("Transactions", func(t *testing.T) {
 		ValidateLibraryTransactions(t)
+	})
+
+	t.Run("Optimistic locking", func(t *testing.T) {
+		ValidateLibraryOptimisticLocking(t)
+	})
+
+	t.Run("Error taxonomy", func(t *testing.T) {
+		ValidateLibraryErrorTaxonomy(t)
 	})
 
 	t.Run("Bulk write", func(t *testing.T) {

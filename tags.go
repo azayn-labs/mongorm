@@ -1,7 +1,6 @@
 package mongorm
 
 import (
-	"fmt"
 	"reflect"
 	"slices"
 	"strings"
@@ -45,6 +44,7 @@ const (
 //	}
 const (
 	ModelTagPrimary            ModelTags = "primary"
+	ModelTagVersion            ModelTags = "version"
 	ModelTagReadonly           ModelTags = "readonly"
 	ModelTagTimestampCreatedAt ModelTags = "timestamp:created_at"
 	ModelTagTimestampUpdatedAt ModelTags = "timestamp:updated_at"
@@ -105,5 +105,5 @@ func (m *MongORM[T]) getFieldByTag(tag ModelTags) (string, string, error) {
 		}
 	}
 
-	return "", "", fmt.Errorf("No field found with tag: %s", tag)
+	return "", "", configErrorf("no field found with tag: %s", tag)
 }

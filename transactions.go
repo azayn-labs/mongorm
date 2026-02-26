@@ -32,7 +32,7 @@ func (m *MongORM[T]) WithTransaction(
 
 	session, err := client.StartSession()
 	if err != nil {
-		return err
+		return normalizeError(err)
 	}
 	defer session.EndSession(ctx)
 
@@ -48,7 +48,7 @@ func (m *MongORM[T]) WithTransaction(
 		opts...,
 	)
 
-	return err
+	return normalizeError(err)
 }
 
 func (m *MongORM[T]) client() (*mongo.Client, error) {
