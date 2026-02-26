@@ -129,6 +129,22 @@ orm.PaginateAfter(ToDoFields.Count, int64(100), 20)  // count > 100, sort asc
 orm.PaginateBefore(ToDoFields.Count, int64(200), 20) // count < 200, sort desc
 ```
 
+## Generic Distinct Query
+
+When you need typed distinct values without using a dedicated helper, use `DistinctFieldAs[T, V]`:
+
+```go
+texts, err := mongorm.DistinctFieldAs[ToDo, string](orm, ctx, ToDoFields.Text)
+if err != nil {
+    panic(err)
+}
+
+counts, err := mongorm.DistinctFieldAs[ToDo, int64](orm, ctx, ToDoFields.Count)
+if err != nil {
+    panic(err)
+}
+```
+
 ## Set()
 
 `Set()` specifies which fields to write during an update (`$set`). Pass a partial model struct with only the fields you want to change.
