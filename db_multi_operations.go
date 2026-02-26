@@ -3,7 +3,6 @@ package mongorm
 import (
 	"context"
 	"errors"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -38,7 +37,7 @@ func (m *MongORM[T]) SaveMulti(
 	m.operations.fixUpdate()
 
 	if len(m.operations.update) == 0 {
-		return nil, fmt.Errorf("no update operations specified")
+		return nil, configErrorf("no update operations specified")
 	}
 
 	res, err := m.info.collection.UpdateMany(
@@ -95,7 +94,7 @@ func (m *MongORM[T]) FindAll(
 		allOpts...,
 	)
 	if err != nil {
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	return &MongORMCursor[T]{MongoCursor: cursor, m: m}, nil
@@ -347,7 +346,7 @@ func castDistinctValues[V any](values []any) ([]V, error) {
 	for i, value := range values {
 		casted, err := castDistinctValue[V](value, targetType)
 		if err != nil {
-			return nil, fmt.Errorf("distinct value at index %d: %w", i, err)
+			return nil, configErrorf("distinct value at index %d: %v", i, err)
 		}
 
 		out[i] = casted

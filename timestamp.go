@@ -1,7 +1,6 @@
 package mongorm
 
 import (
-	"fmt"
 	"reflect"
 	"time"
 
@@ -83,7 +82,7 @@ func (m *MongORM[T]) setTimestampRequirementsFromSchema() error {
 		) {
 			tags := getModelTags(fieldType.Tag)
 			if len(tags) <= 1 {
-				return fmt.Errorf("field %s is missing the timestamps tag value", fieldType.Name)
+				return configErrorf("field %s is missing the timestamps tag value", fieldType.Name)
 			}
 
 			counter++

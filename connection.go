@@ -1,7 +1,6 @@
 package mongorm
 
 import (
-	"fmt"
 	"reflect"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -26,7 +25,7 @@ func NewClient(connectionString string) (*mongo.Client, error) {
 			SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1)),
 	)
 	if err != nil {
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	return client, nil
@@ -96,7 +95,7 @@ func getConnectionStringFromSchema[T any](schema *T) (*string, error) {
 		if doesModelIncludeAnyModelFlags(fieldType.Tag, string(ModelTagConnectionString)) {
 			tags := getModelTags(fieldType.Tag)
 			if len(tags) <= 1 {
-				return nil, fmt.Errorf("field %s is missing the connection string tag value", fieldType.Name)
+				return nil, configErrorf("field %s is missing the connection string tag value", fieldType.Name)
 			}
 
 			return String(tags[0]), nil
@@ -144,7 +143,7 @@ func (m *MongORM[T]) setDatabaseFromSchema(client *mongo.Client) error {
 		if doesModelIncludeAnyModelFlags(fieldType.Tag, string(ModelTagDatabase)) {
 			tags := getModelTags(fieldType.Tag)
 			if len(tags) <= 1 {
-				return fmt.Errorf("field %s is missing the database name tag value", fieldType.Name)
+				return configErrorf("field %s is missing the database name tag value", fieldType.Name)
 			}
 
 			m.info.db = client.Database(tags[0])
@@ -174,7 +173,7 @@ func (m *MongORM[T]) setCollectionFromSchema() error {
 		if doesModelIncludeAnyModelFlags(fieldType.Tag, string(ModelTagCollection)) {
 			tags := getModelTags(fieldType.Tag)
 			if len(tags) <= 1 {
-				return fmt.Errorf("field %s is missing the collection name tag value", fieldType.Name)
+				return configErrorf("field %s is missing the collection name tag value", fieldType.Name)
 			}
 
 			m.info.collection = m.info.db.Collection(tags[0])
