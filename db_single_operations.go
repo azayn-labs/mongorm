@@ -64,7 +64,12 @@ func (m *MongORM[T]) First(
 		return err
 	}
 
-	return m.findOne(ctx, &filter, opts...)
+	allOpts := []options.Lister[options.FindOneOptions]{
+		m.operations.findOneOptions(),
+	}
+	allOpts = append(allOpts, opts...)
+
+	return m.findOne(ctx, &filter, allOpts...)
 }
 
 // Save performs an upsert operation on a single document based on the state of the
@@ -85,6 +90,7 @@ func (m *MongORM[T]) First(
 //	}
 func (m *MongORM[T]) Save(
 	ctx context.Context,
+	opts ...options.Lister[options.FindOneAndUpdateOptions],
 ) error {
 	if err := m.ensureReady(); err != nil {
 		return err
@@ -111,6 +117,7 @@ func (m *MongORM[T]) Save(
 			ctx,
 			&filter,
 			&m.operations.update,
+			opts...,
 		); err != nil {
 			return err
 		}

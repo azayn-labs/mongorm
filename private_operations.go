@@ -140,6 +140,7 @@ func (m *MongORM[T]) updateOne(
 	ctx context.Context,
 	filter *bson.M,
 	update *bson.M,
+	opts ...options.Lister[options.FindOneAndUpdateOptions],
 ) error {
 	var doc T
 
@@ -150,11 +151,19 @@ func (m *MongORM[T]) updateOne(
 		}
 	}
 
+	if len(opts) == 0 {
+		opts = []options.Lister[options.FindOneAndUpdateOptions]{
+			options.FindOneAndUpdate().SetReturnDocument(options.After),
+		}
+	} else {
+		opts = append(opts, options.FindOneAndUpdate().SetReturnDocument(options.After))
+	}
+
 	if err := m.info.collection.FindOneAndUpdate(
 		ctx,
 		filter,
 		update,
-		options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After),
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(&doc); err != nil {
 		return err
 	}
