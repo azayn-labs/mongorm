@@ -108,10 +108,10 @@ func FindLibraryTodoWithSortLimitSkipProjection(t *testing.T) {
 	todoModel := mongorm.New(toDo)
 	todoModel.
 		Where(ToDoFields.Text.Reg(prefix)).
-		Sort(bson.D{{Key: "count", Value: -1}}).
+		Sort(bson.D{{Key: ToDoFields.Count.BSONName(), Value: -1}}).
 		Skip(1).
 		Limit(1).
-		Projection(bson.M{"text": 1, "count": 1})
+		Projection(bson.M{ToDoFields.Text.BSONName(): 1, ToDoFields.Count.BSONName(): 1})
 
 	if err := todoModel.First(t.Context()); err != nil {
 		t.Fatal(err)
@@ -313,5 +313,221 @@ func FindLibraryTodoWithKeysetPagination(t *testing.T) {
 
 	if toDo.Count != 20 {
 		t.Fatalf("expected first keyset page item with count 20, got %d", toDo.Count)
+	}
+}
+
+func AggregateLibraryTodoByText(t *testing.T, text string) {
+	toDo := &ToDo{}
+	todoModel := mongorm.New(toDo)
+
+	pipeline := bson.A{
+		bson.M{"$match": bson.M{ToDoFields.Text.BSONName(): text}},
+		bson.M{"$sort": bson.M{ToDoFields.Count.BSONName(): -1}},
+		bson.M{"$limit": 1},
+	}
+
+	cursor, err := todoModel.Aggregate(t.Context(), pipeline)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cursor.Close(t.Context())
+
+	item, err := cursor.Next(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if item.Document() == nil || item.Document().Count != 3 {
+		t.Fatalf("expected aggregated top count 3, got %+v", item.Document())
+	}
+}
+
+func AggregateLibraryTodoGroups(t *testing.T, text string) {
+	totalAlias := mongorm.Alias("total")
+
+	type GroupResult struct {
+		Done  bool  `bson:"_id"`
+		Total int64 `bson:"total"`
+	}
+
+	baseModel := mongorm.New(&ToDo{})
+	baseModel.WhereBy(ToDoFields.Text, text)
+
+	pipeline := bson.A{
+		bson.M{"$group": bson.M{"_id": mongorm.FieldRef(ToDoFields.Done), totalAlias.Key(): bson.M{"$sum": 1}}},
+		bson.M{"$sort": bson.M{"_id": 1}},
+	}
+
+	groups, err := mongorm.AggregateAs[ToDo, GroupResult](baseModel, t.Context(), pipeline)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(groups) != 2 {
+		t.Fatalf("expected 2 aggregate groups, got %d", len(groups))
+	}
+}
+
+func AggregateLibraryTodoByBuilder(t *testing.T, text string) {
+	toDo := &ToDo{}
+	todoModel := mongorm.New(toDo)
+
+	todoModel.
+		MatchBy(ToDoFields.Text, text).
+		SortByStage(ToDoFields.Count, -1).
+		LimitStage(1)
+
+	cursor, err := todoModel.AggregatePipeline(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cursor.Close(t.Context())
+
+	item, err := cursor.Next(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if item.Document() == nil || item.Document().Count != 3 {
+		t.Fatalf("expected builder aggregate top count 3, got %+v", item.Document())
+	}
+}
+
+func AggregateLibraryTodoGroupsByBuilder(t *testing.T, text string) {
+	totalAlias := mongorm.Alias("total")
+
+	type GroupResult struct {
+		Done  bool  `bson:"_id"`
+		Total int64 `bson:"total"`
+	}
+
+	baseModel := mongorm.New(&ToDo{})
+	baseModel.
+		WhereBy(ToDoFields.Text, text).
+		GroupCountByAlias(ToDoFields.Done, totalAlias).
+		SortStage(bson.M{"_id": 1})
+
+	groups, err := mongorm.AggregatePipelineAs[ToDo, GroupResult](baseModel, t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(groups) != 2 {
+		t.Fatalf("expected 2 builder aggregate groups, got %d", len(groups))
+	}
+}
+
+func AggregateLibraryTodoByBuilderOperators(t *testing.T, text string) {
+	toDo := &ToDo{}
+	todoModel := mongorm.New(toDo)
+
+	todoModel.
+		MatchExpr(ToDoFields.Text.Eq(text)).
+		SortByStage(ToDoFields.Count, -1).
+		LimitStage(1)
+
+	cursor, err := todoModel.AggregatePipeline(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cursor.Close(t.Context())
+
+	item, err := cursor.Next(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if item.Document() == nil || item.Document().Count != 3 {
+		t.Fatalf("expected operator aggregate top count 3, got %+v", item.Document())
+	}
+}
+
+func AggregateLibraryTodoAddFieldsAndFacet(t *testing.T, text string) {
+	rankAlias := mongorm.Alias("rank")
+	doneTrueAlias := mongorm.Alias("doneTrue")
+	doneFalseAlias := mongorm.Alias("doneFalse")
+
+	type AddFieldsResult struct {
+		Text  *string `bson:"text"`
+		Count int64   `bson:"count"`
+		Rank  int64   `bson:"rank"`
+	}
+
+	baseModel := mongorm.New(&ToDo{})
+	baseModel.
+		MatchBy(ToDoFields.Text, text).
+		SortByStage(ToDoFields.Count, -1).
+		LimitStage(1).
+		AddFieldStage(rankAlias, 1)
+
+	rows, err := mongorm.AggregatePipelineAs[ToDo, AddFieldsResult](baseModel, t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(rows) != 1 || rows[0].Rank != 1 {
+		t.Fatalf("expected one row with rank 1, got %+v", rows)
+	}
+
+	type FacetResult struct {
+		DoneTrue  []bson.M `bson:"doneTrue"`
+		DoneFalse []bson.M `bson:"doneFalse"`
+	}
+
+	facetModel := mongorm.New(&ToDo{})
+	facetModel.
+		MatchBy(ToDoFields.Text, text).
+		FacetStageEntries(
+			mongorm.Facet(doneTrueAlias, bson.A{
+				bson.M{"$match": bson.M{ToDoFields.Done.BSONName(): true}},
+				bson.M{"$limit": 1},
+			}),
+			mongorm.Facet(doneFalseAlias, bson.A{
+				bson.M{"$match": bson.M{ToDoFields.Done.BSONName(): false}},
+				bson.M{"$limit": 1},
+			}),
+		)
+
+	facets, err := mongorm.AggregatePipelineAs[ToDo, FacetResult](facetModel, t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(facets) != 1 || len(facets[0].DoneTrue) == 0 || len(facets[0].DoneFalse) == 0 {
+		t.Fatalf("expected populated facet buckets, got %+v", facets)
+	}
+}
+
+func AggregateLibraryTodoGroupSumByBuilder(t *testing.T, text string) {
+	sumCountAlias := mongorm.Alias("sumCount")
+
+	type SumResult struct {
+		Done     bool  `bson:"_id"`
+		SumCount int64 `bson:"sumCount"`
+	}
+
+	baseModel := mongorm.New(&ToDo{})
+	baseModel.
+		WhereBy(ToDoFields.Text, text).
+		MatchWhere().
+		GroupSumByAlias(ToDoFields.Done, ToDoFields.Count, sumCountAlias).
+		SortStage(bson.M{"_id": 1})
+
+	rows, err := mongorm.AggregatePipelineAs[ToDo, SumResult](baseModel, t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 grouped sums, got %d", len(rows))
+	}
+
+	total := int64(0)
+	for _, row := range rows {
+		total += row.SumCount
+	}
+
+	if total != 6 {
+		t.Fatalf("expected grouped sum total 6, got %d", total)
 	}
 }

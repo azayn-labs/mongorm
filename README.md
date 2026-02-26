@@ -7,6 +7,7 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 - Type-safe model and schema definitions using Go generics
 - Fluent API for building queries with `Where()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, keyset pagination helpers, `Set()`, and `Unset()`
 - Full CRUD support: create, find, update (single and multi), and delete (single and multi)
+- Aggregation support: raw pipelines and fluent stage builder via `Aggregate()`, `AggregateRaw()`, `AggregateAs[T, R]()`, and `AggregatePipeline()`
 - Query utilities: `Count()`, `Distinct()`, `DistinctFieldAs[T, V]()`, `DistinctStrings()`, `DistinctInt64()`, `DistinctBool()`, `DistinctFloat64()`, `DistinctObjectIDs()`, and `DistinctTimes()`
 - Lifecycle hooks for every operation (Before/After Create, Save, Update, Find, Delete, Finalize)
 - Automatic `CreatedAt` / `UpdatedAt` timestamp management
@@ -91,6 +92,7 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Finding Documents](./docs/find.md) | Querying with `First()` / `Find()`, `Count()`, and `Distinct()` |
 | [Updating Documents](./docs/update.md) | Single and bulk updates |
 | [Deleting Documents](./docs/delete.md) | Removing documents |
+| [Aggregation](./docs/aggregate.md) | Aggregation pipelines with fluent builder and typed decoding |
 | [Cursors](./docs/cursors.md) | Iterating with `FindAll()` |
 | [Query Building](./docs/query_building.md) | `Where()`, find modifiers, pagination helpers, `Set()`, `Unset()` |
 | [Primitives](./docs/primitives.md) | Type-safe field query methods |
