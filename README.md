@@ -9,6 +9,8 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 - Full CRUD support: create, find, update (single and multi), and delete (single and multi)
 - Aggregation support: raw pipelines and fluent stage builder via `Aggregate()`, `AggregateRaw()`, `AggregateAs[T, R]()`, and `AggregatePipeline()`
 - Query utilities: `Count()`, `Distinct()`, `DistinctFieldAs[T, V]()`, `DistinctStrings()`, `DistinctInt64()`, `DistinctBool()`, `DistinctFloat64()`, `DistinctObjectIDs()`, and `DistinctTimes()`
+- Geospatial support: `GeoField` with `Near`, `Within`, and `Intersects` query helpers
+- Index support: field-driven builders, `Ensure2DSphereIndex()`, and `EnsureGeoDefaults()`
 - Lifecycle hooks for every operation (Before/After Create, Save, Update, Find, Delete, Finalize)
 - Automatic `CreatedAt` / `UpdatedAt` timestamp management
 - Flexible configuration: struct tags, options struct, or both
@@ -92,6 +94,7 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Finding Documents](./docs/find.md) | Querying with `First()` / `Find()`, `Count()`, and `Distinct()` |
 | [Updating Documents](./docs/update.md) | Single and bulk updates |
 | [Deleting Documents](./docs/delete.md) | Removing documents |
+| [Indexes](./docs/indexes.md) | Field-based index builders and geo index setup |
 | [Aggregation](./docs/aggregate.md) | Aggregation pipelines with fluent builder and typed decoding |
 | [Cursors](./docs/cursors.md) | Iterating with `FindAll()` |
 | [Query Building](./docs/query_building.md) | `Where()`, find modifiers, pagination helpers, `Set()`, `Unset()` |
@@ -101,6 +104,21 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Utility Types](./docs/types.md) | Pointer helpers |
 
 HTML documentation is available at [`html_docs/index.html`](./html_docs/index.html).
+
+## Geo Index Defaults Example
+
+```go
+ctx := context.Background()
+
+err := mongorm.New(&ToDo{}).EnsureGeoDefaults(
+    ctx,
+    ToDoFields.Location,
+    []bson.E{mongorm.Asc(ToDoFields.CreatedAt)},
+)
+if err != nil {
+    panic(err)
+}
+```
 
 ## License
 
