@@ -91,6 +91,41 @@ nilDue := mongorm.TimestampVal(nil)       // time.Time{} zero value
 | `Int64(i int64) *int64` | `Int64Val(i *int64) int64` | `0` |
 | `Timestamp(t time.Time) *time.Time` | `TimestampVal(t *time.Time) time.Time` | `time.Time{}` |
 
+## Model Output Helpers
+
+In addition to pointer utilities, MongORM exposes helper methods on `*MongORM[T]` for accessing model data:
+
+### Document
+
+```go
+func (m *MongORM[T]) Document() *T
+```
+
+Returns the underlying model pointer currently attached to the ORM instance.
+
+```go
+orm := mongorm.New(&ToDo{})
+doc := orm.Document()
+```
+
+### JSON
+
+```go
+func (m *MongORM[T]) JSON(doc *T) (map[string]any, error)
+```
+
+Converts a model value into `map[string]any`, useful when you need a generic payload for logging or custom processing.
+
+```go
+orm := mongorm.New(&ToDo{})
+payload, err := orm.JSON(&ToDo{Text: mongorm.String("hello")})
+if err != nil {
+    panic(err)
+}
+
+fmt.Println(payload)
+```
+
 ---
 
 [Back to Documentation Index](./index.md) | [README](../README.md)

@@ -31,6 +31,21 @@ if err := orm.First(ctx); err != nil {
 
 `ErrNotFound` keeps compatibility with Mongo driver behavior by also matching `mongo.ErrNoDocuments`.
 
+## Transaction Capability Helper
+
+Use `IsTransactionUnsupported(err)` to detect deployments that do not support transactions (for example, standalone servers):
+
+```go
+err := mongorm.New(&ToDo{}).WithTransaction(ctx, func(txCtx context.Context) error {
+    // transactional operations
+    return nil
+})
+
+if mongorm.IsTransactionUnsupported(err) {
+    // fallback to non-transaction flow
+}
+```
+
 ---
 
 [Back to Documentation Index](./index.md) | [README](../README.md)

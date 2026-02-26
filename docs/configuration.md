@@ -59,6 +59,21 @@ opts := &mongorm.MongORMOptions{
 orm := mongorm.FromOptions(&ToDo{}, opts)
 ```
 
+You can also use `mongorm.NewClient(...)` as a convenience helper:
+
+```go
+client, err := mongorm.NewClient("mongodb://localhost:27017")
+if err != nil {
+    panic(err)
+}
+
+orm := mongorm.FromOptions(&ToDo{}, &mongorm.MongORMOptions{
+    MongoClient:    client,
+    DatabaseName:   mongorm.String("mydb"),
+    CollectionName: mongorm.String("todos"),
+})
+```
+
 ### MongORMOptions fields
 
 | Field | Type | Description |
@@ -98,6 +113,7 @@ Field-level `mongorm` tags control how individual struct fields are handled duri
 | Tag | Purpose |
 | --- | --- |
 | `primary` | Marks the primary key field (required). Used to determine insert vs update. |
+| `version` | Enables optimistic locking on the field (typically `_version`). |
 | `readonly` | Field is never written during `Set()` or `Unset()` operations. |
 | `timestamp:created_at` | Field receives the insert timestamp and is never updated after that. |
 | `timestamp:updated_at` | Field is updated to `time.Now()` on every `Save()` call. |

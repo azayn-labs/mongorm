@@ -225,6 +225,8 @@ Use `GeoField` for geospatial queries.
 | `IsNull()` | `$eq: null` | Field is null |
 | `IsNotNull()` | `$ne: null` | Field is not null |
 
+{% raw %}
+
 ```go
 point := mongorm.NewGeoPoint(12.9716, 77.5946)
 
@@ -235,6 +237,8 @@ cityBounds := mongorm.NewGeoPolygon(
 )
 orm.Where(ToDoFields.Location.Within(cityBounds))
 ```
+
+{% endraw %}
 
 ---
 

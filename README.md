@@ -123,6 +123,20 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Timestamps](./docs/timestamps.md) | Automatic `CreatedAt` / `UpdatedAt` |
 | [Utility Types](./docs/types.md) | Pointer helpers |
 
+## API Quick Reference
+
+Quick map of commonly used entry points and where they are documented:
+
+- Core initialization: `New()`, `FromOptions()`, `NewClient()` → [Configuration](./docs/configuration.md)
+- CRUD execution: `Save()`, `Update()`, `SaveMulti()`, `Delete()`, `DeleteMulti()`, `First()` / `Find()` → [Creating Documents](./docs/create.md), [Finding Documents](./docs/find.md), [Updating Documents](./docs/update.md), [Deleting Documents](./docs/delete.md)
+- Query builders: `Where()`, `WhereBy()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, `After()` / `Before()`, `PaginateAfter()` / `PaginateBefore()`, `Set()`, `Unset()` → [Query Building](./docs/query_building.md)
+- Typed read helpers: `FindOneAs[T, R]()`, `FindAllAs[T, R]()` → [Finding Documents](./docs/find.md)
+- Distinct and count: `Count()`, `Distinct()`, `DistinctFieldAs[T, V]()`, `DistinctStrings()`, `DistinctInt64()`, `DistinctBool()`, `DistinctFloat64()`, `DistinctObjectIDs()`, `DistinctTimes()` → [Finding Documents](./docs/find.md)
+- Aggregation: `Aggregate()`, `AggregateRaw()`, `AggregateAs[T, R]()`, `AggregatePipelineAs[T, R]()` plus stage builders → [Aggregation](./docs/aggregate.md)
+- Bulk and indexes: `NewBulkWriteBuilder[T]()`, `BulkWrite()`, `BulkWriteInTransaction()`, `EnsureIndex*()` helpers → [Bulk Write](./docs/bulk_write.md), [Indexes](./docs/indexes.md)
+- Cursors and output: `FindAll()`, `MongORMCursor.Next()`, `MongORMCursor.All()`, `Document()`, `JSON()` → [Cursors](./docs/cursors.md), [Utility Types](./docs/types.md)
+- Transactions and errors: `WithTransaction()`, `IsTransactionUnsupported()`, sentinel errors (`ErrNotFound`, `ErrDuplicateKey`, `ErrInvalidConfig`, `ErrTransactionUnsupported`, `ErrOptimisticLockConflict`) → [Transactions](./docs/transactions.md), [Errors](./docs/errors.md)
+
 HTML documentation is available at [`html_docs/index.html`](./html_docs/index.html).
 
 ## Keywords
