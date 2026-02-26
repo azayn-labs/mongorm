@@ -29,7 +29,7 @@ func normalizeError(err error) error {
 		return errors.Join(ErrDuplicateKey, err)
 	}
 
-	if isTransactionUnsupportedError(err) {
+	if IsTransactionUnsupported(err) {
 		return errors.Join(ErrTransactionUnsupported, err)
 	}
 
@@ -38,6 +38,18 @@ func normalizeError(err error) error {
 
 func configErrorf(format string, args ...any) error {
 	return fmt.Errorf("%w: %s", ErrInvalidConfig, fmt.Sprintf(format, args...))
+}
+
+func IsTransactionUnsupported(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if errors.Is(err, ErrTransactionUnsupported) {
+		return true
+	}
+
+	return isTransactionUnsupportedError(err)
 }
 
 func isTransactionUnsupportedError(err error) bool {

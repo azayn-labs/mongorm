@@ -102,7 +102,7 @@ func ValidateLibraryBulkWrite(t *testing.T) {
 		txModels,
 		options.BulkWrite().SetOrdered(true),
 	)
-	if isTransactionUnsupported(err) {
+	if mongorm.IsTransactionUnsupported(err) {
 		t.Skipf("transactions unsupported by current mongodb setup: %v", err)
 	}
 	if err != nil {
