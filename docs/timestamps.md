@@ -47,6 +47,11 @@ orm := mongorm.FromOptions(&ToDo{}, opts)
 
 > `SaveMulti()` does not apply automatic timestamps. Manage them manually if needed.
 
+If your model defines only one timestamp field, MongORM manages that field independently:
+
+- only `timestamp:created_at` → `CreatedAt` is set on insert and not changed afterwards.
+- only `timestamp:updated_at` → `UpdatedAt` is refreshed on each `Save()` / `Update()`.
+
 ## Field Requirements
 
 - Both fields must be of type `*time.Time`.

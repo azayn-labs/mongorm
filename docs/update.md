@@ -82,6 +82,16 @@ update := &ToDo{Text: mongorm.String("placeholder")}
 orm.Unset(update) // removes the "text" field from the document
 ```
 
+## Empty Update Guard
+
+For single-document updates (`Save()` / `Update()`), MongORM returns an explicit configuration error when no update operators are present.
+
+This can happen if you target an existing document (for example via `Where()` or primary key) but do not call `Set()` / `Unset()` and no automatic `UpdatedAt` field is available.
+
+- Error: `mongorm: invalid configuration: no update operations specified`
+
+`SaveMulti()` keeps its own validation and also requires at least one update operator.
+
 ## Update Multiple Documents
 
 Use `SaveMulti()` to apply a `Set()` to every document matching the `Where()` filter. It returns a `*mongo.UpdateResult` with match and modification counts.
