@@ -80,7 +80,6 @@ func ValidateLibraryErrorTaxonomy(t *testing.T) {
 		InsertOne(&ToDo{ID: &dupID, Text: mongorm.String(fmt.Sprintf("dup-b-%d", time.Now().UnixNano()))}).
 		Models()
 
-	err = nil
 	_, err = mongorm.New(&ToDo{}).BulkWrite(t.Context(), secondInsert)
 	if err == nil {
 		t.Fatal("expected duplicate key error")
