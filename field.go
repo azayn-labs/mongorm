@@ -73,7 +73,7 @@ func parseBSONName(tag, fallback string) string {
 // > NOTE: This function is internal only.
 func NewFieldFromType(t reflect.Type, name string) Field {
 	switch t.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return NewFieldFromType(t.Elem(), name)
 
 	case reflect.String:
