@@ -127,6 +127,10 @@ func TestMain(t *testing.T) {
 		FindLibraryTodoWithKeysetPagination(t)
 	})
 
+	t.Run("Ensure indexes", func(t *testing.T) {
+		EnsureLibraryIndexes(t)
+	})
+
 	t.Run("Aggregate TODOs by text", func(t *testing.T) {
 		aggText := "aggregate-check-" + time.Now().Format(time.RFC3339Nano)
 		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(aggText), Done: mongorm.Bool(false), Count: 1})

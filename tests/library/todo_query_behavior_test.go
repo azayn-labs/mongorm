@@ -9,6 +9,7 @@ import (
 
 	"github.com/CdTgr/mongorm"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func FindLibraryTodoByTextWhereBy(t *testing.T, text string) {
@@ -529,5 +530,54 @@ func AggregateLibraryTodoGroupSumByBuilder(t *testing.T, text string) {
 
 	if total != 6 {
 		t.Fatalf("expected grouped sum total 6, got %d", total)
+	}
+}
+
+func EnsureLibraryIndexes(t *testing.T) {
+	model := mongorm.New(&ToDo{})
+
+	geoIndex, err := model.Ensure2DSphereIndex(t.Context(), ToDoFields.Location)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if geoIndex == "" {
+		t.Fatal("expected geo index name")
+	}
+
+	compound := mongorm.NamedIndexModelFromKeys(
+		"todo_text_count_idx",
+		mongorm.Asc(ToDoFields.Text),
+		mongorm.Desc(ToDoFields.Count),
+	)
+
+	compoundIndex, err := model.EnsureIndex(t.Context(), compound)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if compoundIndex == "" {
+		t.Fatal("expected compound index name")
+	}
+
+	indexes, err := model.EnsureIndexes(t.Context(), []mongo.IndexModel{
+		mongorm.IndexModelFromKeys(mongorm.Text(ToDoFields.Text)),
+		mongorm.UniqueIndexModelFromKeys(mongorm.Asc(ToDoFields.Text), mongorm.Asc(ToDoFields.ID)),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(indexes) != 2 {
+		t.Fatalf("expected 2 created index names, got %d", len(indexes))
+	}
+
+	geoDefaults, err := model.EnsureGeoDefaults(
+		t.Context(),
+		ToDoFields.Location,
+		[]bson.E{mongorm.Asc(ToDoFields.CreatedAt)},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(geoDefaults) != 2 {
+		t.Fatalf("expected 2 geo default index names, got %d", len(geoDefaults))
 	}
 }

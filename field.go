@@ -100,6 +100,9 @@ func NewFieldFromType(t reflect.Type, name string) Field {
 
 	case "Time":
 		return primitives.TimestampType(name)
+
+	case "GeoPoint", "GeoLineString", "GeoPolygon":
+		return primitives.GeoType(name)
 	}
 
 	return primitives.GenericType(name)
