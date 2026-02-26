@@ -2,6 +2,7 @@ package mongorm
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -61,10 +62,16 @@ func FindAllAs[T any, R any](
 	if err != nil {
 		return nil, normalizeError(err)
 	}
-	defer cursor.Close(ctx)
 
 	results := []R{}
 	if err := cursor.All(ctx, &results); err != nil {
+		if closeErr := cursor.Close(ctx); closeErr != nil {
+			return nil, errors.Join(normalizeError(err), normalizeError(closeErr))
+		}
+		return nil, normalizeError(err)
+	}
+
+	if err := cursor.Close(ctx); err != nil {
 		return nil, normalizeError(err)
 	}
 
