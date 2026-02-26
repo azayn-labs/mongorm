@@ -180,6 +180,54 @@ func DistinctLibraryTodoTypedHelpers(t *testing.T, prefix string) {
 	if len(counts) < 2 {
 		t.Fatalf("expected at least 2 distinct counts, got %d", len(counts))
 	}
+
+	boolModel := mongorm.New(&ToDo{})
+	boolModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	bools, err := boolModel.DistinctBool(t.Context(), ToDoFields.Done)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(bools) < 2 {
+		t.Fatalf("expected at least 2 distinct booleans, got %d", len(bools))
+	}
+
+	floatModel := mongorm.New(&ToDo{})
+	floatModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	floats, err := floatModel.DistinctFloat64(t.Context(), ToDoFields.Count)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(floats) < 2 {
+		t.Fatalf("expected at least 2 distinct floats, got %d", len(floats))
+	}
+
+	idModel := mongorm.New(&ToDo{})
+	idModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	ids, err := idModel.DistinctObjectIDs(t.Context(), ToDoFields.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(ids) < 2 {
+		t.Fatalf("expected at least 2 distinct object ids, got %d", len(ids))
+	}
+
+	timeModel := mongorm.New(&ToDo{})
+	timeModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	times, err := timeModel.DistinctTimes(t.Context(), ToDoFields.CreatedAt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(times) < 2 {
+		t.Fatalf("expected at least 2 distinct times, got %d", len(times))
+	}
 }
 
 func FindLibraryTodoWithKeysetPagination(t *testing.T) {

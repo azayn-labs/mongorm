@@ -110,9 +110,10 @@ func TestMain(t *testing.T) {
 
 	t.Run("Distinct TODO texts by prefix", func(t *testing.T) {
 		prefix := "distinctcheck" + time.Now().Format("20060102150405")
-		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-a")})
-		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-b"), Count: 2})
-		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-c"), Count: 3})
+		base := time.Now().UTC().Truncate(time.Millisecond)
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-a"), Done: mongorm.Bool(false), Count: 1, CreatedAt: mongorm.Timestamp(base)})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-b"), Done: mongorm.Bool(true), Count: 2, CreatedAt: mongorm.Timestamp(base.Add(1 * time.Second))})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-c"), Done: mongorm.Bool(true), Count: 3, CreatedAt: mongorm.Timestamp(base.Add(2 * time.Second))})
 		defer DeleteAllLibraryTodoByText(t, prefix+"-a")
 		defer DeleteAllLibraryTodoByText(t, prefix+"-b")
 		defer DeleteAllLibraryTodoByText(t, prefix+"-c")

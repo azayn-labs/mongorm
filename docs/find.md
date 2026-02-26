@@ -164,6 +164,26 @@ counts, err := orm.DistinctInt64(ctx, ToDoFields.Count)
 if err != nil {
     panic(err)
 }
+
+flags, err := orm.DistinctBool(ctx, ToDoFields.Done)
+if err != nil {
+    panic(err)
+}
+
+ids, err := orm.DistinctObjectIDs(ctx, ToDoFields.ID)
+if err != nil {
+    panic(err)
+}
+
+times, err := orm.DistinctTimes(ctx, ToDoFields.CreatedAt)
+if err != nil {
+    panic(err)
+}
+
+nums, err := orm.DistinctFloat64(ctx, ToDoFields.Count)
+if err != nil {
+    panic(err)
+}
 ```
 
 ---
