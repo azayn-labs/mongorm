@@ -9,7 +9,7 @@ import (
 )
 
 func FindByIDToDo(t *testing.T, id *bson.ObjectID) {
-	logger(t, fmt.Sprintf("Finding by id %s\n", id.Hex()))
+	logger(t, fmt.Sprintf("[TODO] Finding by id %s\n", id.Hex()))
 
 	toDo := &ToDo{}
 	todoModel := mongorm.New(toDo)
@@ -19,5 +19,5 @@ func FindByIDToDo(t *testing.T, id *bson.ObjectID) {
 		t.Fatal(err)
 	}
 
-	logger(t, fmt.Sprintf("Found using ID %s: %+v\n", id.Hex(), toDo))
+	logger(t, fmt.Sprintf("[TODO] Found using ID %s: %+v\n", id.Hex(), toDo))
 }

@@ -13,11 +13,10 @@ type ToDo struct {
 	Text *string        `json:"text,omitempty" bson:"text,omitempty"`
 
 	// Timestamps
-	CreatedAt *time.Time `json:"created_at,omitempty" bson:"created_at,omitempty"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty" bson:"createdAt,omitempty" mongorm:"true,timestamp:created_at"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty" bson:"updatedAt,omitempty" mongorm:"true,timestamp:updated_at"`
 
-	// Mongorm options
-	timestamps *bool   `mongorm:"true,timestamps"`
+	// MongORM options
 	database   *string `mongorm:"orm-test,connection:database"`
 	collection *string `mongorm:"todo,connection:collection"`
 }

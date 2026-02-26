@@ -8,12 +8,12 @@ import (
 )
 
 func CreateTodo(t *testing.T, toDo *ToDo) {
-	logger(t, "Creating TODO")
+	logger(t, "[TODO] Creating")
 
 	todoModel := mongorm.New(toDo)
 	if err := todoModel.Save(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 
-	logger(t, fmt.Sprintf("Created TODO: %+v\n", toDo))
+	logger(t, fmt.Sprintf("[TODO] Created: %+v\n", toDo))
 }

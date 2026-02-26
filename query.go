@@ -8,6 +8,24 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+// Set adds the specified fields and values to the update document for the current operation.
+// It takes a pointer to a struct of type T, which represents the fields to be updated.
+// The method iterates through the fields of the struct, checking for non-zero values and
+// adding them to the $set operator in the update document. It also handles timestamp fields
+// if the Timestamps option is enabled. The method returns the MongORM instance, allowing for
+// method chaining.
+//
+// Example usage:
+//
+//	type ToDo struct {
+//	   Text *string `bson:"text"`
+//	   // MongORM options
+//	}
+//
+//	toDo := &ToDo{Text: mongorm.String("Buy milk")}
+//	orm := mongorm.New(&ToDo{})
+//	orm.Set(&ToDo{Text: mongorm.String("Canceled Buy milk")})
+//	err := orm.Save(ctx)
 func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 	if value == nil {
 		return m
@@ -84,6 +102,22 @@ func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 	return m
 }
 
+// Save performs an upsert operation, updating an existing document if it exists or inserting
+// a new one if it does not. The method applies any necessary timestamps and executes any
+// defined hooks before and after the save operation. It returns an error if the operation
+// fails.
+//
+// Example usage:
+//
+//	type ToDo struct {
+//	   Text *string `bson:"text"`
+//	   // MongORM options
+//	}
+//
+//	toDo := &ToDo{Text: mongorm.String("Buy milk")}
+//	orm := mongorm.New(&ToDo{})
+//	orm.Unset(&ToDo{Text: nil})
+//	err := orm.Save(ctx)
 func (m *MongORM[T]) Unset(value *T) *MongORM[T] {
 	if value == nil {
 		return m

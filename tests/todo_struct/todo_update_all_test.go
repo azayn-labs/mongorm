@@ -7,7 +7,7 @@ import (
 )
 
 func UpdateAllToDo(t *testing.T, update *ToDo) {
-	logger(t, "Trying to update all todos\n")
+	logger(t, "[TODO] Trying to update all\n")
 
 	toDo := &ToDo{}
 	todoModel := mongorm.New(toDo)
@@ -17,5 +17,5 @@ func UpdateAllToDo(t *testing.T, update *ToDo) {
 		t.Fatal(err)
 	}
 
-	logger(t, "Updated all todos\n")
+	logger(t, "[TODO] Updated all\n")
 }

@@ -5,9 +5,32 @@ import (
 	"reflect"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// connections is a package-level variable that holds a map of MongoDB client connections.
+// The keys of the map are connection strings, and the values are pointers to mongo.Client
+// instances. This allows for reusing existing connections based on the connection string,
+// improving performance and resource management by avoiding unnecessary creation of new
+// clients for the same connection string. and resource management by avoiding unnecessary
+// creation of new clients for the same connection string.
+//
+// > NOTE: This variable is internal only and should not be accessed
+// directly from outside the package.
 var connections = make(map[string]*mongo.Client)
+
+func NewClient(connectionString string) (*mongo.Client, error) {
+	client, err := mongo.Connect(
+		options.Client().
+			ApplyURI(connectionString).
+			SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1)),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
 
 func (m *MongORM[T]) initializeClient() {
 	var client *mongo.Client

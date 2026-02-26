@@ -8,7 +8,7 @@ import (
 )
 
 func FindByRegexToDo(t *testing.T, pattern string) {
-	logger(t, fmt.Sprintf("Using pattern %s\n", pattern))
+	logger(t, fmt.Sprintf("[TODO] Using pattern %s\n", pattern))
 
 	toDo := &ToDo{}
 	todoModel := mongorm.New(toDo)
@@ -18,5 +18,5 @@ func FindByRegexToDo(t *testing.T, pattern string) {
 		t.Fatal(err)
 	}
 
-	logger(t, fmt.Sprintf("Found with regex %s: %+v\n", pattern, toDo))
+	logger(t, fmt.Sprintf("[TODO] Found with regex %s: %+v\n", pattern, toDo))
 }

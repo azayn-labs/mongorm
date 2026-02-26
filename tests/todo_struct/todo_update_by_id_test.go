@@ -9,7 +9,7 @@ import (
 )
 
 func UpdateToDoByID(t *testing.T, id *bson.ObjectID, update *ToDo) {
-	logger(t, fmt.Sprintf("Using id %s for update\n", id.Hex()))
+	logger(t, fmt.Sprintf("[TODO] Using id %s for update\n", id.Hex()))
 
 	toDo := &ToDo{}
 	todoModel := mongorm.New(toDo)
@@ -19,5 +19,5 @@ func UpdateToDoByID(t *testing.T, id *bson.ObjectID, update *ToDo) {
 		t.Fatal(err)
 	}
 
-	logger(t, fmt.Sprintf("Updated TODO with ID %s: %+v\n", id.Hex(), toDo))
+	logger(t, fmt.Sprintf("[TODO] Updated with ID %s: %+v\n", id.Hex(), toDo))
 }

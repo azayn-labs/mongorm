@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/CdTgr/mongorm"
 )
 
-func CreateTodo(t *testing.T) *ToDo {
-	t.Log("Creating new TODO using options")
+func CreateTodo(t *testing.T, toDo *ToDo) {
+	logger(t, "[TODO] Creating")
 	client, err := mongorm.NewClient("mongodb://localhost:27017")
 	if err != nil {
 		t.Fatal(err)
@@ -17,11 +18,8 @@ func CreateTodo(t *testing.T) *ToDo {
 	modelOptions := &mongorm.MongORMOptions{
 		MongoClient:    client,
 		CollectionName: mongorm.String("todo"),
-		Timestamps:     true,
+		Timestamps:     true, // Can only be set if the timestamps fields are added to the struct.
 		DatabaseName:   mongorm.String("orm-test"),
-	}
-	toDo := &ToDo{
-		Text: mongorm.String("This is an example todo created with options"),
 	}
 
 	todoModel := mongorm.FromOptions(toDo, modelOptions)
@@ -29,6 +27,5 @@ func CreateTodo(t *testing.T) *ToDo {
 		t.Fatal(err)
 	}
 
-	t.Logf("TODO created with options: %+v\n", toDo)
-	return toDo
+	logger(t, fmt.Sprintf("[TODO] Created: %+v\n", toDo))
 }

@@ -8,10 +8,26 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+// Field represents a field in the schema of a MongORM instance. It provides methods to
+// retrieve the BSON name of the field, which is used for constructing queries and updates.
+// The Field interface is implemented by specific field types (e.g., StringField, Int64Field)
+// that correspond to the Go types used in the schema struct.
+//
+// Example usage:
+//
+//	type ToDo struct {
+//	  Text *string `bson:"text"`
+//	}
+//	var ToDoFields = mongorm.FieldsOf[ToDo, struct {
+//	  Text *primitives.StringField
+//	}]()
 type Field interface {
 	BSONName() string
 }
 
+// Builds a map of field names to Field objects for the given struct type T.
+//
+// > NOTE: This function is internal only.
 func buildFields[T any]() map[string]Field {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 
@@ -34,6 +50,10 @@ func buildFields[T any]() map[string]Field {
 	return fields
 }
 
+// Parses the BSON tag to extract the field name, falling back to the struct field
+// name if the tag is empty.
+//
+// > NOTE: This function is internal only.
 func parseBSONName(tag, fallback string) string {
 	if tag == "" {
 		return fallback
@@ -47,6 +67,10 @@ func parseBSONName(tag, fallback string) string {
 	return name
 }
 
+// Creates a Field object based on the Go type. This is used to build the schema
+// information for the MongORM instance.
+//
+// > NOTE: This function is internal only.
 func NewFieldFromType(t reflect.Type, name string) Field {
 	switch t.Kind() {
 	case reflect.Ptr:
@@ -81,6 +105,18 @@ func NewFieldFromType(t reflect.Type, name string) Field {
 	return primitives.GenericType(name)
 }
 
+// Generates a struct of Field objects corresponding to the fields of the struct type T.
+// This is used to create a schema struct that can be used for type-safe queries and updates.
+//
+// Example usage:
+//
+//		type ToDo struct {
+//		  Text *string `bson:"text"`
+//		}
+//		type ToDoSchema struct {
+//		  Text *primitives.StringField
+//		}
+//	 var ToDoFields = mongorm.FieldsOf[ToDo, ToDoSchema]()
 func FieldsOf[T any, F any]() F {
 	var out F
 

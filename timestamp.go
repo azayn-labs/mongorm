@@ -8,6 +8,11 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+// applyTimestamps checks if the Timestamps option is enabled and, if so, it updates
+// the timestamp fields in the schema. It sets the created_at field if it is nil or zero,
+// and it always updates the updated_at field.
+//
+// > NOTE: This method is internal only.
 func (m *MongORM[T]) applyTimestamps() {
 	if !m.options.Timestamps {
 		return
@@ -51,6 +56,12 @@ func (m *MongORM[T]) applyTimestamps() {
 	}
 }
 
+// setTimestampRequirementsFromSchema checks the schema for any fields that are tagged with
+// the timestamp tags (created_at and updated_at). If it finds any fields with these tags,
+// it sets the Timestamps option to true, indicating that the MongORM instance should
+// manage timestamps for this schema.
+//
+// > NOTE: This method is internal only.
 func (m *MongORM[T]) setTimestampRequirementsFromSchema() {
 	ref := reflect.ValueOf(m.schema).Elem()
 	t := ref.Type()
