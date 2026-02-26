@@ -114,6 +114,42 @@ orm.WhereBy(ToDoFields.Text, "Buy groceries")
 
 To retrieve multiple documents, use `FindAll()` which returns a cursor. See [Cursors](./cursors.md) for details.
 
+## Count Documents
+
+Use `Count()` to get the number of documents matching current filters.
+
+```go
+todo := &ToDo{}
+orm  := mongorm.New(todo)
+
+count, err := orm.
+    Where(ToDoFields.Text.Reg("groceries")).
+    Count(ctx)
+if err != nil {
+    panic(err)
+}
+
+fmt.Printf("Matched: %d\n", count)
+```
+
+## Distinct Values
+
+Use `Distinct()` to return unique values for a field among matched documents.
+
+```go
+todo := &ToDo{}
+orm  := mongorm.New(todo)
+
+values, err := orm.
+    Where(ToDoFields.Text.Reg("^buy")).
+    Distinct(ctx, ToDoFields.Text)
+if err != nil {
+    panic(err)
+}
+
+fmt.Printf("Distinct text values: %d\n", len(values))
+```
+
 ---
 
 [Back to Documentation Index](./index.md) | [README](../README.md)

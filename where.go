@@ -86,3 +86,38 @@ func (m *MongORM[T]) Projection(value any) *MongORM[T] {
 	m.operations.projection = value
 	return m
 }
+
+// After adds a keyset-style pagination filter: field > cursor.
+func (m *MongORM[T]) After(field Field, cursor any) *MongORM[T] {
+	return m.Where(bson.M{field.BSONName(): bson.M{"$gt": cursor}})
+}
+
+// Before adds a keyset-style pagination filter: field < cursor.
+func (m *MongORM[T]) Before(field Field, cursor any) *MongORM[T] {
+	return m.Where(bson.M{field.BSONName(): bson.M{"$lt": cursor}})
+}
+
+// PageSize is an alias for Limit and is intended for pagination use-cases.
+func (m *MongORM[T]) PageSize(size int64) *MongORM[T] {
+	return m.Limit(size)
+}
+
+// PaginateAfter applies keyset pagination in ascending order for the given field.
+func (m *MongORM[T]) PaginateAfter(field Field, cursor any, size int64) *MongORM[T] {
+	name := field.BSONName()
+
+	return m.
+		After(field, cursor).
+		Sort(bson.D{{Key: name, Value: 1}}).
+		PageSize(size)
+}
+
+// PaginateBefore applies keyset pagination in descending order for the given field.
+func (m *MongORM[T]) PaginateBefore(field Field, cursor any, size int64) *MongORM[T] {
+	name := field.BSONName()
+
+	return m.
+		Before(field, cursor).
+		Sort(bson.D{{Key: name, Value: -1}}).
+		PageSize(size)
+}

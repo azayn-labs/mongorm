@@ -98,4 +98,27 @@ func TestMain(t *testing.T) {
 
 		DeleteAllLibraryTodoByText(t, bulkText)
 	})
+
+	t.Run("Count TODOs by text", func(t *testing.T) {
+		countText := "count-check-" + time.Now().Format(time.RFC3339Nano)
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(countText), Count: 1})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(countText), Count: 2})
+		defer DeleteAllLibraryTodoByText(t, countText)
+
+		CountLibraryTodoByText(t, countText)
+	})
+
+	t.Run("Distinct TODO texts by prefix", func(t *testing.T) {
+		prefix := "distinctcheck" + time.Now().Format("20060102150405")
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-a")})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-b")})
+		defer DeleteAllLibraryTodoByText(t, prefix+"-a")
+		defer DeleteAllLibraryTodoByText(t, prefix+"-b")
+
+		DistinctLibraryTodoTextByPrefix(t, prefix)
+	})
+
+	t.Run("Find with keyset pagination", func(t *testing.T) {
+		FindLibraryTodoWithKeysetPagination(t)
+	})
 }

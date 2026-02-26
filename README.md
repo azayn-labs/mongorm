@@ -5,8 +5,9 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 ## Features
 
 - Type-safe model and schema definitions using Go generics
-- Fluent API for building queries with `Where()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, `Set()`, and `Unset()`
+- Fluent API for building queries with `Where()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, keyset pagination helpers, `Set()`, and `Unset()`
 - Full CRUD support: create, find, update (single and multi), and delete (single and multi)
+- Query utilities: `Count()` and `Distinct()`
 - Lifecycle hooks for every operation (Before/After Create, Save, Update, Find, Delete, Finalize)
 - Automatic `CreatedAt` / `UpdatedAt` timestamp management
 - Flexible configuration: struct tags, options struct, or both
@@ -87,11 +88,11 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Getting Started](./docs/getting_started.md) | Installation, model definition, schema setup |
 | [Configuration](./docs/configuration.md) | Struct tags, options struct, mixed mode |
 | [Creating Documents](./docs/create.md) | Inserting with `Save()` |
-| [Finding Documents](./docs/find.md) | Querying with `First()` / `Find()` |
+| [Finding Documents](./docs/find.md) | Querying with `First()` / `Find()`, `Count()`, and `Distinct()` |
 | [Updating Documents](./docs/update.md) | Single and bulk updates |
 | [Deleting Documents](./docs/delete.md) | Removing documents |
 | [Cursors](./docs/cursors.md) | Iterating with `FindAll()` |
-| [Query Building](./docs/query_building.md) | `Where()`, `Set()`, `Unset()` |
+| [Query Building](./docs/query_building.md) | `Where()`, find modifiers, pagination helpers, `Set()`, `Unset()` |
 | [Primitives](./docs/primitives.md) | Type-safe field query methods |
 | [Hooks](./docs/hooks.md) | Lifecycle hooks |
 | [Timestamps](./docs/timestamps.md) | Automatic `CreatedAt` / `UpdatedAt` |

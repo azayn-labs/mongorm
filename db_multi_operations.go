@@ -134,3 +134,46 @@ func (m *MongORM[T]) DeleteMulti(
 
 	return res, nil
 }
+
+// Count returns the number of documents that match the current filters.
+func (m *MongORM[T]) Count(
+	ctx context.Context,
+	opts ...options.Lister[options.CountOptions],
+) (int64, error) {
+	if err := m.ensureReady(); err != nil {
+		return 0, err
+	}
+
+	filter, _, err := m.withPrimaryFilters()
+	if err != nil {
+		return 0, err
+	}
+
+	return m.info.collection.CountDocuments(ctx, filter, opts...)
+}
+
+// Distinct returns all unique values of the given field among documents
+// that match the current filters.
+func (m *MongORM[T]) Distinct(
+	ctx context.Context,
+	field Field,
+	opts ...options.Lister[options.DistinctOptions],
+) ([]any, error) {
+	if err := m.ensureReady(); err != nil {
+		return nil, err
+	}
+
+	filter, _, err := m.withPrimaryFilters()
+	if err != nil {
+		return nil, err
+	}
+
+	result := m.info.collection.Distinct(ctx, field.BSONName(), filter, opts...)
+
+	values := []any{}
+	if err := result.Decode(&values); err != nil {
+		return nil, err
+	}
+
+	return values, nil
+}

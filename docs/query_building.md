@@ -113,6 +113,22 @@ cursor, err := orm.
     FindAll(ctx)
 ```
 
+## Cursor-Style Pagination Helpers
+
+For keyset pagination, use `After()` / `Before()` or the convenience methods `PaginateAfter()` / `PaginateBefore()`.
+
+```go
+// low-level keyset filters
+orm.After(ToDoFields.Count, int64(100)).PageSize(20)
+orm.Before(ToDoFields.Count, int64(200)).PageSize(20)
+```
+
+```go
+// convenience helpers (includes sort + page size)
+orm.PaginateAfter(ToDoFields.Count, int64(100), 20)  // count > 100, sort asc
+orm.PaginateBefore(ToDoFields.Count, int64(200), 20) // count < 200, sort desc
+```
+
 ## Set()
 
 `Set()` specifies which fields to write during an update (`$set`). Pass a partial model struct with only the fields you want to change.

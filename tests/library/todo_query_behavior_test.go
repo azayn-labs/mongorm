@@ -125,3 +125,62 @@ func FindLibraryTodoWithSortLimitSkipProjection(t *testing.T) {
 		t.Fatal("expected done to be omitted by projection")
 	}
 }
+
+func CountLibraryTodoByText(t *testing.T, text string) {
+	toDo := &ToDo{}
+	todoModel := mongorm.New(toDo)
+	todoModel.WhereBy(ToDoFields.Text, text)
+
+	count, err := todoModel.Count(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if count < 2 {
+		t.Fatalf("expected count >= 2, got %d", count)
+	}
+}
+
+func DistinctLibraryTodoTextByPrefix(t *testing.T, prefix string) {
+	toDo := &ToDo{}
+	todoModel := mongorm.New(toDo)
+	todoModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	values, err := todoModel.Distinct(t.Context(), ToDoFields.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(values) < 2 {
+		t.Fatalf("expected at least 2 distinct values, got %d", len(values))
+	}
+}
+
+func FindLibraryTodoWithKeysetPagination(t *testing.T) {
+	prefix := fmt.Sprintf("keyset-check-%d", time.Now().UnixNano())
+
+	todos := []*ToDo{
+		{Text: mongorm.String(prefix), Count: 10},
+		{Text: mongorm.String(prefix), Count: 20},
+		{Text: mongorm.String(prefix), Count: 30},
+	}
+
+	for _, item := range todos {
+		CreateLibraryTodo(t, item)
+		defer DeleteLibraryTodoByID(t, item.ID)
+	}
+
+	toDo := &ToDo{}
+	todoModel := mongorm.New(toDo)
+	todoModel.
+		WhereBy(ToDoFields.Text, prefix).
+		PaginateAfter(ToDoFields.Count, int64(10), 1)
+
+	if err := todoModel.First(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	if toDo.Count != 20 {
+		t.Fatalf("expected first keyset page item with count 20, got %d", toDo.Count)
+	}
+}

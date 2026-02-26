@@ -35,8 +35,8 @@ func DeleteAllLibraryTodoByText(t *testing.T, text string) {
 		t.Fatal(err)
 	}
 
-	if res.DeletedCount < 2 {
-		t.Fatalf("expected at least 2 deleted documents, got %d", res.DeletedCount)
+	if res.DeletedCount < 1 {
+		t.Fatalf("expected at least 1 deleted document, got %d", res.DeletedCount)
 	}
 
 	verify := &ToDo{}
