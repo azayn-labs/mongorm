@@ -2,6 +2,7 @@ package mongorm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -299,7 +300,9 @@ func (m *MongORM[T]) AggregateRaw(
 		finalPipeline = append(finalPipeline, pipeline...)
 	}
 
-	allOpts := append(opts, options.Aggregate().SetAllowDiskUse(true))
+	allOpts := make([]options.Lister[options.AggregateOptions], 0, len(opts)+1)
+	allOpts = append(allOpts, opts...)
+	allOpts = append(allOpts, options.Aggregate().SetAllowDiskUse(true))
 
 	cursor, err := m.info.collection.Aggregate(ctx, finalPipeline, allOpts...)
 	if err != nil {
@@ -320,11 +323,17 @@ func AggregateAs[T any, R any](
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(ctx)
 
 	results := []R{}
 	if err := cursor.All(ctx, &results); err != nil {
+		if closeErr := cursor.Close(ctx); closeErr != nil {
+			return nil, errors.Join(err, normalizeError(closeErr))
+		}
 		return nil, err
+	}
+
+	if err := cursor.Close(ctx); err != nil {
+		return nil, normalizeError(err)
 	}
 
 	return results, nil

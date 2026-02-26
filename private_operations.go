@@ -169,7 +169,7 @@ func (m *MongORM[T]) updateOne(
 		ctx,
 		filter,
 		update,
-		options.FindOneAndUpdate().SetReturnDocument(options.After),
+		opts...,
 	).Decode(&doc); err != nil {
 		if optimisticLockEnabled && errors.Is(err, mongo.ErrNoDocuments) {
 			return errors.Join(ErrOptimisticLockConflict, err)
