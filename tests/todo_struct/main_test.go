@@ -15,6 +15,14 @@ func TestMain(t *testing.T) {
 		Text: mongorm.String("This is an example todo created with struct options"),
 	}
 
+	t.Run("Advanced fields generation", func(t *testing.T) {
+		ValidateAdvancedFieldsOf(t)
+	})
+
+	t.Run("Advanced generic queries", func(t *testing.T) {
+		ValidateAdvancedGenericQueries(t)
+	})
+
 	t.Run("Create TODO", func(t *testing.T) {
 		CreateTodo(t, toDo)
 	})

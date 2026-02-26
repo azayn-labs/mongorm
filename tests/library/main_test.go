@@ -26,8 +26,16 @@ func TestMain(t *testing.T) {
 		ValidateFieldsOf(t)
 	})
 
+	t.Run("Advanced fields generation", func(t *testing.T) {
+		ValidateAdvancedFieldsOf(t)
+	})
+
 	t.Run("Primitive queries", func(t *testing.T) {
 		ValidatePrimitiveQueries(t)
+	})
+
+	t.Run("Advanced generic queries", func(t *testing.T) {
+		ValidateAdvancedGenericQueries(t)
 	})
 
 	t.Run("Create TODO", func(t *testing.T) {

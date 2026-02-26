@@ -17,6 +17,7 @@ import "github.com/azayn-labs/mongorm/primitives"
 | `Int64Field` | `int64` | Integer numeric fields (also handles int32, int8, int) |
 | `Float64Field` | `float64` | Floating-point fields (also handles float32) |
 | `BoolField` | `bool` | Boolean fields |
+| `StringArrayField` | `[]string` | Arrays/slices of strings (also handles `*[]string`) |
 | `TimestampField` | `time.Time` | Date/time fields |
 | `GeoField` | `mongorm.GeoPoint` / `mongorm.GeoLineString` / `mongorm.GeoPolygon` | Geospatial fields |
 | `GenericField` | any | Fallback for unmapped types (only `BSONName()` available) |
@@ -165,6 +166,37 @@ orm.Where(ToDoFields.Done.Eq(false))
 
 ---
 
+## StringArrayField
+
+**Package:** `primitives.StringArrayField`
+
+Handles `[]string` and `*[]string` model fields.
+
+### StringArray Methods
+
+| Method | MongoDB operator | Description |
+| --- | --- | --- |
+| `Eq(v []string)` | `$eq` | Equals full array |
+| `Ne(v []string)` | `$ne` | Not equals full array |
+| `In(v []string)` | `$in` | Any value in list |
+| `Nin(v []string)` | `$nin` | No value in list |
+| `Contains(v string)` | `$in` | Array contains value |
+| `ContainsAll(v []string)` | `$all` | Array contains all values |
+| `Size(v int)` | `$size` | Array size matches |
+| `ElemMatch(v bson.M)` | `$elemMatch` | Element matches filter |
+| `Exists()` | `$exists: true` | Field exists |
+| `NotExists()` | `$exists: false` | Field does not exist |
+| `IsNull()` | `$eq: null` | Field is null |
+| `IsNotNull()` | `$ne: null` | Field is not null |
+
+```go
+orm.Where(UserFields.Auth.Scopes.Contains("email"))
+orm.Where(UserFields.Auth.Scopes.ContainsAll([]string{"email", "profile"}))
+orm.Where(UserFields.Auth.Scopes.Size(2))
+```
+
+---
+
 ## TimestampField
 
 **Package:** `primitives.TimestampField`
@@ -246,11 +278,88 @@ orm.Where(ToDoFields.Location.Within(cityBounds))
 
 **Package:** `primitives.GenericField`
 
-Fallback for any model field type that does not map to one of the specific primitives above. Only provides the `BSONName()` method; use raw `bson.M` with `Where()` for custom queries.
+Fallback for any model field type that does not map to one of the specific primitives above (for example custom structs, slices, arrays, and maps).
+
+### Generic Methods
+
+| Method | MongoDB operator | Description |
+| --- | --- | --- |
+| `Eq(v any)` | `$eq` | Equals |
+| `Ne(v any)` | `$ne` | Not equals |
+| `In(v []any)` | `$in` | In a list |
+| `Nin(v []any)` | `$nin` | Not in a list |
+| `Exists()` | `$exists: true` | Field exists |
+| `NotExists()` | `$exists: false` | Field does not exist |
+| `IsNull()` | `$eq: null` | Field is null |
+| `IsNotNull()` | `$ne: null` | Field is not null |
+| `Contains(v any)` | `$in` | Value exists inside array field |
+| `ContainsAll(v []any)` | `$all` | Array contains all values |
+| `Size(v int)` | `$size` | Array size matches |
+| `ElemMatch(v bson.M)` | `$elemMatch` | Element matches filter |
+| `Path(path string)` | dot-notation | Targets nested path under object field |
 
 ```go
-orm.Where(bson.M{"myField": bson.M{"$exists": true}})
+orm.Where(UserFields.Goth.Path("provider").Eq("google"))
+orm.Where(UserFields.Roles.Contains("admin"))
+orm.Where(UserFields.Roles.Size(2))
 ```
+
+### Deep typed fields for custom structs
+
+For nested user-defined struct fields that map to `GenericField`, you can still generate type-safe primitives with `NestedFieldsOf`.
+
+```go
+type ToDoMeta struct {
+    Source   *string `bson:"source,omitempty"`
+    Priority *int64  `bson:"priority,omitempty"`
+}
+
+type ToDoMetaSchema struct {
+    Source   *primitives.StringField
+    Priority *primitives.Int64Field
+}
+
+var ToDoFields = mongorm.FieldsOf[ToDo, ToDoSchema]()
+var ToDoMetaFields = mongorm.NestedFieldsOf[ToDoMeta, ToDoMetaSchema](ToDoFields.Meta)
+
+orm.Where(ToDoMetaFields.Source.Eq("import"))
+orm.Where(ToDoMetaFields.Priority.Gte(2))
+```
+
+### Nested schema pointer support (User inside ToDo)
+
+`FieldsOf` also supports nested schema structs directly, so you can define a schema pointer for a nested model field.
+
+```go
+type User struct {
+    ID    *bson.ObjectID `bson:"_id,omitempty"`
+    Email *string        `bson:"email,omitempty"`
+}
+
+type UserSchema struct {
+    ID    *primitives.StringField
+    Email *primitives.StringField
+}
+
+type ToDo struct {
+    ID   *bson.ObjectID `bson:"_id,omitempty"`
+    User *User          `bson:"user,omitempty"`
+}
+
+type ToDoSchema struct {
+    ID   *primitives.ObjectIDField
+    User *UserSchema
+}
+
+var ToDoFields = mongorm.FieldsOf[ToDo, ToDoSchema]()
+
+orm.Where(ToDoFields.User.Email.Eq("john@example.com"))
+// => {"user.email": "john@example.com"}
+```
+
+This works for deeper nesting as well (for example `todo.user.profile.provider`).
+
+It also works when the nested model field is an array/slice of structs, including pointer slices such as `Key *[]UserDefinedStruct`, by declaring `Key *UserDefinedStructSchema` in the schema.
 
 ---
 

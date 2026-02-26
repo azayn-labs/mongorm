@@ -12,6 +12,8 @@ import (
 type ToDo struct {
 	ID   *bson.ObjectID `bson:"_id,omitempty" json:"_id,omitempty" mongorm:"primary"`
 	Text *string        `json:"text,omitempty" bson:"text,omitempty"`
+	Tags []string       `json:"tags,omitempty" bson:"tags,omitempty"`
+	Meta *ToDoMeta      `json:"meta,omitempty" bson:"meta,omitempty"`
 
 	// Timestamps
 	CreatedAt *time.Time `json:"createdAt,omitempty" bson:"createdAt,omitempty" mongorm:"true,timestamp:created_at"`
@@ -23,14 +25,27 @@ type ToDo struct {
 	collection       *string `mongorm:"todo,connection:collection"`
 }
 
+type ToDoMeta struct {
+	Source   *string `json:"source,omitempty" bson:"source,omitempty"`
+	Priority *int64  `json:"priority,omitempty" bson:"priority,omitempty"`
+}
+
+type ToDoMetaSchema struct {
+	Source   *primitives.StringField
+	Priority *primitives.Int64Field
+}
+
 type ToDoSchema struct {
 	ID        *primitives.ObjectIDField
 	Text      *primitives.StringField
+	Tags      *primitives.GenericField
+	Meta      *primitives.GenericField
 	CreatedAt *primitives.TimestampField
 	UpdatedAt *primitives.TimestampField
 }
 
 var ToDoFields = mongorm.FieldsOf[ToDo, ToDoSchema]()
+var ToDoMetaFields = mongorm.NestedFieldsOf[ToDoMeta, ToDoMetaSchema](ToDoFields.Meta)
 
 // Hooks
 
