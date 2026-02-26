@@ -33,26 +33,6 @@ func clonePtr[T any](src *T, reset bool) *T {
 	return &dst
 }
 
-// MongORMOptions holds the configuration options for a MongORM instance, including settings for
-// timestamps, collection and database names, and the MongoDB client. This struct is used to
-// customize the behavior of the MongORM instance when connecting to the database and performing
-// operations.
-//
-// > NOTE: This function is internal only.
-func jsonContainsField(jsonData []byte, field string) (any, bool) {
-	var data map[string]interface{}
-	if err := json.Unmarshal(jsonData, &data); err != nil {
-		return nil, false
-	}
-
-	value, exists := data[field]
-	if !exists || value == nil {
-		return nil, false
-	}
-
-	return value, true
-}
-
 func castDistinctValue[V any](value any, targetType reflect.Type) (V, error) {
 	var zero V
 
