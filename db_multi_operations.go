@@ -255,6 +255,71 @@ func (m *MongORM[T]) DistinctTimes(
 	return DistinctFieldAs[T, time.Time](m, ctx, field, opts...)
 }
 
+// Aggregate runs an aggregation pipeline and returns a MongORM cursor decoding
+// each result document into T.
+func (m *MongORM[T]) Aggregate(
+	ctx context.Context,
+	pipeline bson.A,
+	opts ...options.Lister[options.AggregateOptions],
+) (*MongORMCursor[T], error) {
+	cursor, err := m.AggregateRaw(ctx, pipeline, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MongORMCursor[T]{MongoCursor: cursor, m: m}, nil
+}
+
+// AggregateRaw runs an aggregation pipeline and returns a raw MongoDB cursor.
+func (m *MongORM[T]) AggregateRaw(
+	ctx context.Context,
+	pipeline bson.A,
+	opts ...options.Lister[options.AggregateOptions],
+) (*mongo.Cursor, error) {
+	if err := m.ensureReady(); err != nil {
+		return nil, err
+	}
+
+	filters, _, err := m.withPrimaryFilters()
+	if err != nil {
+		return nil, err
+	}
+
+	finalPipeline := bson.A{}
+	if len(filters) > 0 {
+		finalPipeline = append(finalPipeline, bson.M{"$match": filters})
+	}
+
+	if pipeline != nil {
+		finalPipeline = append(finalPipeline, pipeline...)
+	}
+
+	allOpts := append(opts, options.Aggregate().SetAllowDiskUse(true))
+
+	return m.info.collection.Aggregate(ctx, finalPipeline, allOpts...)
+}
+
+// AggregateAs runs an aggregation pipeline and decodes the results into a typed slice.
+func AggregateAs[T any, R any](
+	m *MongORM[T],
+	ctx context.Context,
+	pipeline bson.A,
+	opts ...options.Lister[options.AggregateOptions],
+) ([]R, error) {
+	cursor, err := m.AggregateRaw(ctx, pipeline, opts...)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	results := []R{}
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
 func castDistinctValues[V any](values []any) ([]V, error) {
 	var sample V
 	targetType := reflect.TypeOf(sample)

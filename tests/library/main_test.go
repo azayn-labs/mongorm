@@ -126,4 +126,20 @@ func TestMain(t *testing.T) {
 	t.Run("Find with keyset pagination", func(t *testing.T) {
 		FindLibraryTodoWithKeysetPagination(t)
 	})
+
+	t.Run("Aggregate TODOs by text", func(t *testing.T) {
+		aggText := "aggregate-check-" + time.Now().Format(time.RFC3339Nano)
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(aggText), Done: mongorm.Bool(false), Count: 1})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(aggText), Done: mongorm.Bool(true), Count: 2})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(aggText), Done: mongorm.Bool(true), Count: 3})
+		defer DeleteAllLibraryTodoByText(t, aggText)
+
+		AggregateLibraryTodoByText(t, aggText)
+		AggregateLibraryTodoGroups(t, aggText)
+		AggregateLibraryTodoByBuilder(t, aggText)
+		AggregateLibraryTodoGroupsByBuilder(t, aggText)
+		AggregateLibraryTodoByBuilderOperators(t, aggText)
+		AggregateLibraryTodoAddFieldsAndFacet(t, aggText)
+		AggregateLibraryTodoGroupSumByBuilder(t, aggText)
+	})
 }

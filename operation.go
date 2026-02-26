@@ -17,6 +17,7 @@ type MongORMOperations struct {
 	projection any    `json:"-"`
 	limit      *int64 `json:"-"`
 	skip       *int64 `json:"-"`
+	pipeline   bson.A `json:"-"`
 }
 
 // Resets the MongORMOperations instance to its initial state. This is useful for reusing
@@ -32,6 +33,7 @@ func (o *MongORMOperations) reset() {
 	o.projection = nil
 	o.limit = nil
 	o.skip = nil
+	o.pipeline = nil
 }
 
 // fixUpdate ensures that the update document is properly structured for MongoDB operations.

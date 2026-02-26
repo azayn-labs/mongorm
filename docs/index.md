@@ -15,6 +15,7 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 - [Finding Documents](./find.md) — Querying single documents with `First()` / `Find()`
 - [Updating Documents](./update.md) — Updating single or multiple documents
 - [Deleting Documents](./delete.md) — Removing documents from a collection
+- [Aggregation](./aggregate.md) — Running aggregation pipelines with typed decoding
 - [Cursors](./cursors.md) — Iterating over multiple results with `FindAll()`
 
 ### Query Building
