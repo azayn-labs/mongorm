@@ -3,6 +3,7 @@ package mongorm
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -180,28 +181,33 @@ func (m *MongORM[T]) Distinct(
 	return values, nil
 }
 
+// DistinctFieldAs returns distinct values cast/converted to the requested type.
+func DistinctFieldAs[T any, V any](
+	m *MongORM[T],
+	ctx context.Context,
+	field Field,
+	opts ...options.Lister[options.DistinctOptions],
+) ([]V, error) {
+	values, err := m.Distinct(ctx, field, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return castDistinctValues[V](values)
+}
+
+// DistinctAs converts raw distinct values into a typed slice.
+func DistinctAs[V any](values []any) ([]V, error) {
+	return castDistinctValues[V](values)
+}
+
 // DistinctStrings returns distinct string values for the given field.
 func (m *MongORM[T]) DistinctStrings(
 	ctx context.Context,
 	field Field,
 	opts ...options.Lister[options.DistinctOptions],
 ) ([]string, error) {
-	values, err := m.Distinct(ctx, field, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]string, len(values))
-	for i, value := range values {
-		typed, ok := value.(string)
-		if !ok {
-			return nil, fmt.Errorf("distinct value at index %d is %T, expected string", i, value)
-		}
-
-		out[i] = typed
-	}
-
-	return out, nil
+	return DistinctFieldAs[T, string](m, ctx, field, opts...)
 }
 
 // DistinctInt64 returns distinct integer values (as int64) for the given field.
@@ -210,30 +216,7 @@ func (m *MongORM[T]) DistinctInt64(
 	field Field,
 	opts ...options.Lister[options.DistinctOptions],
 ) ([]int64, error) {
-	values, err := m.Distinct(ctx, field, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]int64, len(values))
-	for i, value := range values {
-		switch typed := value.(type) {
-		case int64:
-			out[i] = typed
-		case int32:
-			out[i] = int64(typed)
-		case int16:
-			out[i] = int64(typed)
-		case int8:
-			out[i] = int64(typed)
-		case int:
-			out[i] = int64(typed)
-		default:
-			return nil, fmt.Errorf("distinct value at index %d is %T, expected integer", i, value)
-		}
-	}
-
-	return out, nil
+	return DistinctFieldAs[T, int64](m, ctx, field, opts...)
 }
 
 // DistinctBool returns distinct boolean values for the given field.
@@ -242,22 +225,7 @@ func (m *MongORM[T]) DistinctBool(
 	field Field,
 	opts ...options.Lister[options.DistinctOptions],
 ) ([]bool, error) {
-	values, err := m.Distinct(ctx, field, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]bool, len(values))
-	for i, value := range values {
-		typed, ok := value.(bool)
-		if !ok {
-			return nil, fmt.Errorf("distinct value at index %d is %T, expected bool", i, value)
-		}
-
-		out[i] = typed
-	}
-
-	return out, nil
+	return DistinctFieldAs[T, bool](m, ctx, field, opts...)
 }
 
 // DistinctFloat64 returns distinct numeric values (as float64) for the given field.
@@ -266,34 +234,7 @@ func (m *MongORM[T]) DistinctFloat64(
 	field Field,
 	opts ...options.Lister[options.DistinctOptions],
 ) ([]float64, error) {
-	values, err := m.Distinct(ctx, field, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]float64, len(values))
-	for i, value := range values {
-		switch typed := value.(type) {
-		case float64:
-			out[i] = typed
-		case float32:
-			out[i] = float64(typed)
-		case int64:
-			out[i] = float64(typed)
-		case int32:
-			out[i] = float64(typed)
-		case int16:
-			out[i] = float64(typed)
-		case int8:
-			out[i] = float64(typed)
-		case int:
-			out[i] = float64(typed)
-		default:
-			return nil, fmt.Errorf("distinct value at index %d is %T, expected number", i, value)
-		}
-	}
-
-	return out, nil
+	return DistinctFieldAs[T, float64](m, ctx, field, opts...)
 }
 
 // DistinctObjectIDs returns distinct ObjectID values for the given field.
@@ -302,28 +243,7 @@ func (m *MongORM[T]) DistinctObjectIDs(
 	field Field,
 	opts ...options.Lister[options.DistinctOptions],
 ) ([]bson.ObjectID, error) {
-	values, err := m.Distinct(ctx, field, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make([]bson.ObjectID, len(values))
-	for i, value := range values {
-		switch typed := value.(type) {
-		case bson.ObjectID:
-			out[i] = typed
-		case string:
-			id, err := bson.ObjectIDFromHex(typed)
-			if err != nil {
-				return nil, fmt.Errorf("distinct value at index %d is invalid objectid hex: %w", i, err)
-			}
-			out[i] = id
-		default:
-			return nil, fmt.Errorf("distinct value at index %d is %T, expected ObjectID", i, value)
-		}
-	}
-
-	return out, nil
+	return DistinctFieldAs[T, bson.ObjectID](m, ctx, field, opts...)
 }
 
 // DistinctTimes returns distinct time values for the given field.
@@ -332,23 +252,21 @@ func (m *MongORM[T]) DistinctTimes(
 	field Field,
 	opts ...options.Lister[options.DistinctOptions],
 ) ([]time.Time, error) {
-	values, err := m.Distinct(ctx, field, opts...)
-	if err != nil {
-		return nil, err
-	}
+	return DistinctFieldAs[T, time.Time](m, ctx, field, opts...)
+}
 
-	out := make([]time.Time, len(values))
+func castDistinctValues[V any](values []any) ([]V, error) {
+	var sample V
+	targetType := reflect.TypeOf(sample)
+	out := make([]V, len(values))
+
 	for i, value := range values {
-		switch typed := value.(type) {
-		case time.Time:
-			out[i] = typed
-		case interface{ Time() time.Time }:
-			out[i] = typed.Time()
-		case int64:
-			out[i] = time.UnixMilli(typed)
-		default:
-			return nil, fmt.Errorf("distinct value at index %d is %T, expected time", i, value)
+		casted, err := castDistinctValue[V](value, targetType)
+		if err != nil {
+			return nil, fmt.Errorf("distinct value at index %d: %w", i, err)
 		}
+
+		out[i] = casted
 	}
 
 	return out, nil

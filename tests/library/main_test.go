@@ -120,6 +120,7 @@ func TestMain(t *testing.T) {
 
 		DistinctLibraryTodoTextByPrefix(t, prefix)
 		DistinctLibraryTodoTypedHelpers(t, prefix)
+		DistinctLibraryTodoGenericHelper(t, prefix)
 	})
 
 	t.Run("Find with keyset pagination", func(t *testing.T) {

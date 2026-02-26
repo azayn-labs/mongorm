@@ -230,6 +230,63 @@ func DistinctLibraryTodoTypedHelpers(t *testing.T, prefix string) {
 	}
 }
 
+func DistinctLibraryTodoGenericHelper(t *testing.T, prefix string) {
+	baseModel := mongorm.New(&ToDo{})
+	baseModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	texts, err := mongorm.DistinctFieldAs[ToDo, string](baseModel, t.Context(), ToDoFields.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(texts) < 2 {
+		t.Fatalf("expected at least 2 distinct strings via DistinctAs, got %d", len(texts))
+	}
+
+	countModel := mongorm.New(&ToDo{})
+	countModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	counts, err := mongorm.DistinctFieldAs[ToDo, int64](countModel, t.Context(), ToDoFields.Count)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(counts) < 2 {
+		t.Fatalf("expected at least 2 distinct counts via DistinctAs, got %d", len(counts))
+	}
+
+	boolModel := mongorm.New(&ToDo{})
+	boolModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	flags, err := mongorm.DistinctFieldAs[ToDo, bool](boolModel, t.Context(), ToDoFields.Done)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(flags) < 2 {
+		t.Fatalf("expected at least 2 distinct bools via DistinctAs, got %d", len(flags))
+	}
+
+	idModel := mongorm.New(&ToDo{})
+	idModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	ids, err := mongorm.DistinctFieldAs[ToDo, bson.ObjectID](idModel, t.Context(), ToDoFields.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ids) < 2 {
+		t.Fatalf("expected at least 2 distinct object ids via DistinctAs, got %d", len(ids))
+	}
+
+	timeModel := mongorm.New(&ToDo{})
+	timeModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	times, err := mongorm.DistinctFieldAs[ToDo, time.Time](timeModel, t.Context(), ToDoFields.CreatedAt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(times) < 2 {
+		t.Fatalf("expected at least 2 distinct times via DistinctAs, got %d", len(times))
+	}
+}
+
 func FindLibraryTodoWithKeysetPagination(t *testing.T) {
 	prefix := fmt.Sprintf("keyset-check-%d", time.Now().UnixNano())
 

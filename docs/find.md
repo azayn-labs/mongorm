@@ -186,6 +186,27 @@ if err != nil {
 }
 ```
 
+## Generic Distinct Helper
+
+Use `DistinctFieldAs[T, V]()` when you want typed results without a dedicated helper method:
+
+```go
+texts, err := mongorm.DistinctFieldAs[ToDo, string](orm, ctx, ToDoFields.Text)
+if err != nil {
+    panic(err)
+}
+
+ids, err := mongorm.DistinctFieldAs[ToDo, bson.ObjectID](orm, ctx, ToDoFields.ID)
+if err != nil {
+    panic(err)
+}
+
+times, err := mongorm.DistinctFieldAs[ToDo, time.Time](orm, ctx, ToDoFields.CreatedAt)
+if err != nil {
+    panic(err)
+}
+```
+
 ---
 
 [Back to Documentation Index](./index.md) | [README](../README.md)
