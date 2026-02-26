@@ -151,6 +151,10 @@ func TestMain(t *testing.T) {
 		ValidateLibraryVersioningConfigSafety(t)
 	})
 
+	t.Run("Timestamps", func(t *testing.T) {
+		ValidateLibraryTimestamps(t)
+	})
+
 	t.Run("Bulk write", func(t *testing.T) {
 		ValidateLibraryBulkWrite(t)
 	})

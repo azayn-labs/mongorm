@@ -69,3 +69,11 @@ func isTransactionUnsupportedError(err error) bool {
 
 	return false
 }
+
+func mapUpdateOneError(err error, optimisticLockEnabled bool) error {
+	if optimisticLockEnabled && errors.Is(err, mongo.ErrNoDocuments) {
+		return errors.Join(ErrOptimisticLockConflict, err)
+	}
+
+	return normalizeError(err)
+}
