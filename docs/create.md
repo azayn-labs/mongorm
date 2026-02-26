@@ -11,7 +11,7 @@ import (
     "context"
     "fmt"
 
-    "github.com/CdTgr/mongorm"
+    "github.com/azayn-labs/mongorm"
     "go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -49,7 +49,7 @@ Use `FromOptions` when you want to configure the connection at runtime rather th
 
 ```go
 import (
-    "github.com/CdTgr/mongorm"
+    "github.com/azayn-labs/mongorm"
     "go.mongodb.org/mongo-driver/v2/mongo"
     "go.mongodb.org/mongo-driver/v2/mongo/options"
 )

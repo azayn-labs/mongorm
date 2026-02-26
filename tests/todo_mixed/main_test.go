@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/CdTgr/mongorm"
+	"github.com/azayn-labs/mongorm"
 )
 
 func logger(t *testing.T, message string) {

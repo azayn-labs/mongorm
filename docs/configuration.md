@@ -37,7 +37,7 @@ Pass a `*mongorm.MongORMOptions` struct to `FromOptions()`. This is useful when 
 
 ```go
 import (
-    "github.com/CdTgr/mongorm"
+    "github.com/azayn-labs/mongorm"
     "go.mongodb.org/mongo-driver/v2/mongo"
     "go.mongodb.org/mongo-driver/v2/mongo/options"
 )

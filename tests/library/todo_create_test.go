@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/CdTgr/mongorm"
+	"github.com/azayn-labs/mongorm"
 )
 
 func CreateLibraryTodo(t *testing.T, toDo *ToDo) {

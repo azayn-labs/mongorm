@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/CdTgr/mongorm"
+	"github.com/azayn-labs/mongorm"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 

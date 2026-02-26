@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CdTgr/mongorm"
+	"github.com/azayn-labs/mongorm"
 )
 
 func ValidateTypesHelpers(t *testing.T) {

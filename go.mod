@@ -1,4 +1,4 @@
-module github.com/CdTgr/mongorm
+module github.com/azayn-labs/mongorm
 
 go 1.25.7
 

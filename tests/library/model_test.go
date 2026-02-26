@@ -3,8 +3,8 @@ package main
 import (
 	"time"
 
-	"github.com/CdTgr/mongorm"
-	"github.com/CdTgr/mongorm/primitives"
+	"github.com/azayn-labs/mongorm"
+	"github.com/azayn-labs/mongorm/primitives"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 

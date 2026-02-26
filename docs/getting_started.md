@@ -5,7 +5,7 @@ This guide helps you launch a production-ready Go + MongoDB data layer with Mong
 ## Installation
 
 ```bash
-go get github.com/CdTgr/mongorm
+go get github.com/azayn-labs/mongorm
 ```
 
 ## Define a Model
@@ -43,7 +43,7 @@ Field names in the schema must match the corresponding field names in the model 
 ```go
 package main
 
-import "github.com/CdTgr/mongorm/primitives"
+import "github.com/azayn-labs/mongorm/primitives"
 
 type ToDoSchema struct {
     ID        *primitives.ObjectIDField
@@ -63,7 +63,7 @@ Use `FieldsOf[Model, Schema]()` to generate a populated schema instance. The ret
 ```go
 package main
 
-import "github.com/CdTgr/mongorm"
+import "github.com/azayn-labs/mongorm"
 
 var ToDoFields = mongorm.FieldsOf[ToDo, ToDoSchema]()
 ```
@@ -95,7 +95,7 @@ orm  := mongorm.New(todo)
 
 ```go
 import (
-    "github.com/CdTgr/mongorm"
+    "github.com/azayn-labs/mongorm"
     "go.mongodb.org/mongo-driver/v2/mongo"
     "go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -145,8 +145,8 @@ import (
     "context"
     "fmt"
 
-    "github.com/CdTgr/mongorm"
-    "github.com/CdTgr/mongorm/primitives"
+    "github.com/azayn-labs/mongorm"
+    "github.com/azayn-labs/mongorm/primitives"
     "go.mongodb.org/mongo-driver/v2/bson"
 )
 

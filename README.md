@@ -2,6 +2,8 @@
 
 > Open source by **Azayn Labs** — Home: [azayn.com](https://azayn.com)
 
+> GitHub Profile: [github.com/azayn-labs/mongorm](https://github.com/azayn-labs/mongorm)
+
 MongORM is a production-ready, type-safe MongoDB ORM for Go that combines generics, fluent query building, and predictable data modeling. It helps Go teams ship faster with clean CRUD workflows, typed filters, aggregation support, and transaction-safe operations.
 
 If you are building backend APIs, SaaS products, internal tools, or data-heavy services on MongoDB, MongORM gives you a high-signal developer experience without hiding core MongoDB power.
@@ -38,7 +40,7 @@ If you are building backend APIs, SaaS products, internal tools, or data-heavy s
 ## Installation
 
 ```bash
-go get github.com/CdTgr/mongorm
+go get github.com/azayn-labs/mongorm
 ```
 
 ## Quick Start
@@ -50,8 +52,8 @@ import (
     "context"
     "fmt"
 
-    "github.com/CdTgr/mongorm"
-    "github.com/CdTgr/mongorm/primitives"
+    "github.com/azayn-labs/mongorm"
+    "github.com/azayn-labs/mongorm/primitives"
     "go.mongodb.org/mongo-driver/v2/bson"
 )
 

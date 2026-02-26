@@ -5,7 +5,7 @@ Primitives are type-safe field wrappers used in your schema struct. Each field t
 ## Importing
 
 ```go
-import "github.com/CdTgr/mongorm/primitives"
+import "github.com/azayn-labs/mongorm/primitives"
 ```
 
 ## Available Field Types

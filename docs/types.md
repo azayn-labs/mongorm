@@ -5,7 +5,7 @@ MongORM includes helper functions for creating pointers to basic Go types. Becau
 ## Import
 
 ```go
-import "github.com/CdTgr/mongorm"
+import "github.com/azayn-labs/mongorm"
 ```
 
 ## Functions

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/CdTgr/mongorm"
+	"github.com/azayn-labs/mongorm"
 )
 
 func CreateTodo(t *testing.T, toDo *ToDo) {
