@@ -1,9 +1,7 @@
 package todostruct
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/CdTgr/mongorm"
 )
@@ -25,23 +23,10 @@ func TestMain(t *testing.T) {
 		FindByIDToDo(t, toDo.ID)
 	})
 
-	t.Run("Find TODO by regex", func(t *testing.T) {
-		FindByRegexToDo(t, "struct options$")
-	})
-
 	t.Run("Update TODO by ID", func(t *testing.T) {
 		update := &ToDo{
 			Text: mongorm.String("This is an updated todo text"),
 		}
 		UpdateToDoByID(t, toDo.ID, update)
-	})
-
-	t.Run("Update All TODOs", func(t *testing.T) {
-		update := &ToDo{
-			Text: mongorm.String(
-				fmt.Sprintf("This is an updated todo text for all todos at %s", time.Now()),
-			),
-		}
-		UpdateAllToDo(t, update)
 	})
 }

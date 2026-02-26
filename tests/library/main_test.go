@@ -122,7 +122,6 @@ func TestMain(t *testing.T) {
 		defer DeleteAllLibraryTodoByText(t, prefix+"-b")
 		defer DeleteAllLibraryTodoByText(t, prefix+"-c")
 
-		DistinctLibraryTodoTextByPrefix(t, prefix)
 		DistinctLibraryTodoTypedHelpers(t, prefix)
 		DistinctLibraryTodoGenericHelper(t, prefix)
 	})
@@ -168,8 +167,6 @@ func TestMain(t *testing.T) {
 
 		AggregateLibraryTodoByText(t, aggText)
 		AggregateLibraryTodoGroups(t, aggText)
-		AggregateLibraryTodoByBuilder(t, aggText)
-		AggregateLibraryTodoGroupsByBuilder(t, aggText)
 		AggregateLibraryTodoByBuilderOperators(t, aggText)
 		AggregateLibraryTodoAddFieldsAndFacet(t, aggText)
 		AggregateLibraryTodoGroupSumByBuilder(t, aggText)

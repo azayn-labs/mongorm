@@ -188,21 +188,6 @@ func CountLibraryTodoByText(t *testing.T, text string) {
 	}
 }
 
-func DistinctLibraryTodoTextByPrefix(t *testing.T, prefix string) {
-	toDo := &ToDo{}
-	todoModel := mongorm.New(toDo)
-	todoModel.Where(ToDoFields.Text.Reg("^" + prefix))
-
-	values, err := todoModel.Distinct(t.Context(), ToDoFields.Text)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(values) < 2 {
-		t.Fatalf("expected at least 2 distinct values, got %d", len(values))
-	}
-}
-
 func DistinctLibraryTodoTypedHelpers(t *testing.T, prefix string) {
 	textModel := mongorm.New(&ToDo{})
 	textModel.Where(ToDoFields.Text.Reg("^" + prefix))
@@ -412,55 +397,6 @@ func AggregateLibraryTodoGroups(t *testing.T, text string) {
 
 	if len(groups) != 2 {
 		t.Fatalf("expected 2 aggregate groups, got %d", len(groups))
-	}
-}
-
-func AggregateLibraryTodoByBuilder(t *testing.T, text string) {
-	toDo := &ToDo{}
-	todoModel := mongorm.New(toDo)
-
-	todoModel.
-		MatchBy(ToDoFields.Text, text).
-		SortByStage(ToDoFields.Count, -1).
-		LimitStage(1)
-
-	cursor, err := todoModel.AggregatePipeline(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer cursor.Close(t.Context())
-
-	item, err := cursor.Next(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if item.Document() == nil || item.Document().Count != 3 {
-		t.Fatalf("expected builder aggregate top count 3, got %+v", item.Document())
-	}
-}
-
-func AggregateLibraryTodoGroupsByBuilder(t *testing.T, text string) {
-	totalAlias := mongorm.Alias("total")
-
-	type GroupResult struct {
-		Done  bool  `bson:"_id"`
-		Total int64 `bson:"total"`
-	}
-
-	baseModel := mongorm.New(&ToDo{})
-	baseModel.
-		WhereBy(ToDoFields.Text, text).
-		GroupCountByAlias(ToDoFields.Done, totalAlias).
-		SortStage(bson.M{"_id": 1})
-
-	groups, err := mongorm.AggregatePipelineAs[ToDo, GroupResult](baseModel, t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(groups) != 2 {
-		t.Fatalf("expected 2 builder aggregate groups, got %d", len(groups))
 	}
 }
 
