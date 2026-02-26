@@ -76,11 +76,7 @@ func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 	if len(set) > 0 {
 		if m.options.Timestamps {
 			_, createdFieldName, err := m.getFieldByTag(ModelTagTimestampCreatedAt)
-			if err != nil {
-				return m
-			}
-
-			if set[createdFieldName] != nil {
+			if err == nil && set[createdFieldName] != nil {
 				delete(set, createdFieldName) // Never update createdAt
 			}
 		}
@@ -161,19 +157,13 @@ func (m *MongORM[T]) Unset(value *T) *MongORM[T] {
 
 	if len(unset) > 0 {
 		if m.options.Timestamps {
-			_, createdFieldName, err := m.getFieldByTag(ModelTagTimestampCreatedAt)
-			if err != nil {
-				return m
-			}
-			_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
-			if err != nil {
-				return m
-			}
-
-			if unset[createdFieldName] != nil {
+			_, createdFieldName, createdErr := m.getFieldByTag(ModelTagTimestampCreatedAt)
+			if createdErr == nil && unset[createdFieldName] != nil {
 				delete(unset, createdFieldName) // Never unset createdAt
 			}
-			if unset[updatedFieldName] != nil {
+
+			_, updatedFieldName, updatedErr := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+			if updatedErr == nil && unset[updatedFieldName] != nil {
 				delete(unset, updatedFieldName) // Never unset updatedAt
 			}
 		}
@@ -197,19 +187,17 @@ func (m *MongORM[T]) Unset(value *T) *MongORM[T] {
 
 		if m.options.Timestamps {
 			_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
-			if err != nil {
-				return m
-			}
-
-			if m.operations.update["$set"] == nil {
-				if m.operations.update == nil {
-					m.operations.update = bson.M{}
-				}
-				m.operations.update["$set"] = bson.M{updatedFieldName: time.Now()}
-			} else {
-				set, ok := m.operations.update["$set"].(bson.M)
-				if ok {
-					set[updatedFieldName] = time.Now()
+			if err == nil {
+				if m.operations.update["$set"] == nil {
+					if m.operations.update == nil {
+						m.operations.update = bson.M{}
+					}
+					m.operations.update["$set"] = bson.M{updatedFieldName: time.Now()}
+				} else {
+					set, ok := m.operations.update["$set"].(bson.M)
+					if ok {
+						set[updatedFieldName] = time.Now()
+					}
 				}
 			}
 		}

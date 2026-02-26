@@ -2,8 +2,8 @@ package mongorm
 
 import (
 	"context"
-	"encoding/json"
 	"maps"
+	"reflect"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -294,31 +294,53 @@ func (m *MongORM[T]) withPrimaryFilters() (bson.M, *bson.ObjectID, error) {
 	filters := bson.M{}
 	maps.Copy(filters, m.operations.query)
 
-	_, primaryFieldName, err := m.getFieldByTag(ModelTagPrimary)
+	primaryFieldGoName, primaryFieldName, err := m.getFieldByTag(ModelTagPrimary)
 	if err != nil {
 		return nil, nil, err
 	}
-	jsonSchema, err := json.Marshal(m.schema)
-	if err != nil {
-		return nil, nil, configErrorf("failed to marshal schema: %v", err)
+
+	v := reflect.ValueOf(m.schema)
+	if !v.IsValid() || v.Kind() != reflect.Pointer || v.IsNil() {
+		return filters, nil, nil
 	}
 
-	if val, ok := jsonContainsField(jsonSchema, primaryFieldName); ok && val != nil {
-		str, ok := val.(string)
+	field := v.Elem().FieldByName(primaryFieldGoName)
+	if !field.IsValid() {
+		return nil, nil, configErrorf("primary field is invalid")
+	}
+
+	if field.Kind() == reflect.Pointer {
+		if field.IsNil() {
+			return filters, nil, nil
+		}
+		field = field.Elem()
+	}
+
+	var id bson.ObjectID
+	switch field.Kind() {
+	case reflect.Array:
+		decoded, ok := field.Interface().(bson.ObjectID)
 		if !ok {
-			return nil, nil, configErrorf("primary field cannot be converted to string")
+			return nil, nil, configErrorf("primary field must be a bson.ObjectID or hex string")
+		}
+		id = decoded
+	case reflect.String:
+		hex := field.String()
+		if hex == "" {
+			return filters, nil, nil
 		}
 
-		id, err := bson.ObjectIDFromHex(str)
+		decoded, err := bson.ObjectIDFromHex(hex)
 		if err != nil {
 			return nil, nil, err
 		}
-
-		// Add the primary field to the filter
-		filters[primaryFieldName] = id
-
-		return filters, &id, nil
+		id = decoded
+	default:
+		return nil, nil, configErrorf("primary field must be a bson.ObjectID or hex string")
 	}
 
-	return filters, nil, nil
+	filters[primaryFieldName] = id
+
+	return filters, &id, nil
+
 }

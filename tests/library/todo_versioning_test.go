@@ -101,4 +101,27 @@ func ValidateLibraryVersioningConfigSafety(t *testing.T) {
 			t.Fatalf("expected ErrInvalidConfig, got: %v", err)
 		}
 	})
+
+	t.Run("Primary without json tag still enforces version on update", func(t *testing.T) {
+		type noJSONPrimaryVersionModel struct {
+			ID      *bson.ObjectID `bson:"_id,omitempty" mongorm:"primary"`
+			Text    *string        `bson:"text,omitempty"`
+			Version *int64         `bson:"_version,omitempty" mongorm:"version"`
+
+			connectionString *string `mongorm:"mongodb://localhost:27017,connection:url"`
+			database         *string `mongorm:"orm-test,connection:database"`
+			collection       *string `mongorm:"todo_library,connection:collection"`
+		}
+
+		id := bson.NewObjectID()
+		updater := mongorm.New(&noJSONPrimaryVersionModel{ID: &id, Version: nil})
+		updater.Set(&noJSONPrimaryVersionModel{Text: mongorm.String("should-fail")})
+		err := updater.Save(t.Context())
+		if err == nil {
+			t.Fatal("expected invalid configuration error for nil version pointer on update")
+		}
+		if !errors.Is(err, mongorm.ErrInvalidConfig) {
+			t.Fatalf("expected ErrInvalidConfig, got: %v", err)
+		}
+	})
 }

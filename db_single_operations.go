@@ -97,6 +97,7 @@ func (m *MongORM[T]) Save(
 	}
 
 	schema := any(m.schema)
+	hasExplicitUpdate := len(m.operations.update) > 0
 	m.applyTimestamps()
 	m.operations.fixUpdate()
 
@@ -105,10 +106,13 @@ func (m *MongORM[T]) Save(
 		return err
 	}
 
-	if id != nil || len(filter) > 0 {
-		optimisticLockEnabled, err := m.applyOptimisticLock(&filter, &m.operations.update)
-		if err != nil {
-			return err
+	if hasExplicitUpdate || len(m.operations.query) > 0 {
+		optimisticLockEnabled := false
+		if id != nil {
+			optimisticLockEnabled, err = m.applyOptimisticLock(&filter, &m.operations.update)
+			if err != nil {
+				return err
+			}
 		}
 
 		if len(m.operations.update) == 0 {
