@@ -26,6 +26,10 @@ func (m *MongORM[T]) SaveMulti(
 	ctx context.Context,
 	opts ...options.Lister[options.UpdateManyOptions],
 ) (*mongo.UpdateResult, error) {
+	if err := m.ensureReady(); err != nil {
+		return nil, err
+	}
+
 	m.operations.fixQuery()
 	m.operations.fixUpdate()
 
@@ -66,6 +70,10 @@ func (m *MongORM[T]) FindAll(
 	ctx context.Context,
 	opts ...options.Lister[options.FindOptions],
 ) (*MongORMCursor[T], error) {
+	if err := m.ensureReady(); err != nil {
+		return nil, err
+	}
+
 	filters, _, err := m.withPrimaryFilters()
 	if err != nil {
 		return nil, err

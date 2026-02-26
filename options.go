@@ -62,7 +62,7 @@ func FromOptions[T any](schema *T, options *MongORMOptions) *MongORM[T] {
 		m.options = options
 	}
 
-	m.initializeClient()
+	m.initErr = m.initializeClient()
 	m.operations.reset()
 
 	return m

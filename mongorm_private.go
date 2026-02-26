@@ -1,6 +1,26 @@
 package mongorm
 
-import "go.mongodb.org/mongo-driver/v2/bson"
+import (
+	"fmt"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
+
+func (m *MongORM[T]) ensureReady() error {
+	if m == nil {
+		return fmt.Errorf("mongorm instance is nil")
+	}
+
+	if m.initErr != nil {
+		return m.initErr
+	}
+
+	if m.info == nil || m.info.collection == nil {
+		return fmt.Errorf("mongodb collection is not initialized")
+	}
+
+	return nil
+}
 
 // clone creates a deep copy of the MongORM instance, including its schema and operations.
 // This is useful for creating a new instance with the same connection and collection

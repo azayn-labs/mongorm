@@ -26,6 +26,7 @@ type MongORM[T any] struct {
 	options    *MongORMOptions
 	info       *MongORMInfo
 	operations *MongORMOperations
+	initErr    error
 }
 
 // Creates a new MongORM instance with the provided schema and options.

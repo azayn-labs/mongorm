@@ -55,6 +55,10 @@ func (m *MongORM[T]) First(
 	ctx context.Context,
 	opts ...options.Lister[options.FindOneOptions],
 ) error {
+	if err := m.ensureReady(); err != nil {
+		return err
+	}
+
 	filter, _, err := m.withPrimaryFilters()
 	if err != nil {
 		return err
@@ -82,6 +86,10 @@ func (m *MongORM[T]) First(
 func (m *MongORM[T]) Save(
 	ctx context.Context,
 ) error {
+	if err := m.ensureReady(); err != nil {
+		return err
+	}
+
 	schema := any(m.schema)
 	m.applyTimestamps()
 	m.operations.fixUpdate()
@@ -166,6 +174,10 @@ func (m *MongORM[T]) Update(
 func (m *MongORM[T]) Delete(
 	ctx context.Context,
 ) error {
+	if err := m.ensureReady(); err != nil {
+		return err
+	}
+
 	filter, _, err := m.withPrimaryFilters()
 	if err != nil {
 		return err

@@ -62,7 +62,7 @@ func (m *MongORM[T]) applyTimestamps() {
 // manage timestamps for this schema.
 //
 // > NOTE: This method is internal only.
-func (m *MongORM[T]) setTimestampRequirementsFromSchema() {
+func (m *MongORM[T]) setTimestampRequirementsFromSchema() error {
 	ref := reflect.ValueOf(m.schema).Elem()
 	t := ref.Type()
 
@@ -83,7 +83,7 @@ func (m *MongORM[T]) setTimestampRequirementsFromSchema() {
 		) {
 			tags := getModelTags(fieldType.Tag)
 			if len(tags) <= 1 {
-				panic(fmt.Sprintf("Field %s is missing the timestamps tag value", fieldType.Name))
+				return fmt.Errorf("field %s is missing the timestamps tag value", fieldType.Name)
 			}
 
 			counter++
@@ -93,4 +93,6 @@ func (m *MongORM[T]) setTimestampRequirementsFromSchema() {
 	if counter > 1 {
 		m.options.Timestamps = true
 	}
+
+	return nil
 }

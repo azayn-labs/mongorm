@@ -154,12 +154,22 @@ func (m *MongORM[T]) updateOne(
 		ctx,
 		filter,
 		update,
-		options.FindOneAndUpdate().SetReturnDocument(options.After),
+		options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After),
 	).Decode(&doc); err != nil {
 		return err
 	}
 
-	return m.applySchema(&doc)
+	if err := m.applySchema(&doc); err != nil {
+		return err
+	}
+
+	if hook, ok := schema.(AfterUpdateHook[T]); ok {
+		if err := hook.AfterUpdate(m); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // findOne retrieves a single document from the collection based on the provided filter and
