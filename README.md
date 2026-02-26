@@ -7,6 +7,7 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 - Type-safe model and schema definitions using Go generics
 - Fluent API for building queries with `Where()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, keyset pagination helpers, `Set()`, and `Unset()`
 - Full CRUD support: create, find, update (single and multi), and delete (single and multi)
+- Bulk write support with typed builder helpers via `BulkWrite()`, `BulkWriteInTransaction()`, and `NewBulkWriteBuilder[T]()`
 - Aggregation support: raw pipelines and fluent stage builder via `Aggregate()`, `AggregateRaw()`, `AggregateAs[T, R]()`, and `AggregatePipeline()`
 - Query utilities: `Count()`, `Distinct()`, `DistinctFieldAs[T, V]()`, `DistinctStrings()`, `DistinctInt64()`, `DistinctBool()`, `DistinctFloat64()`, `DistinctObjectIDs()`, and `DistinctTimes()`
 - Geospatial support: `GeoField` with `Near`, `Within`, and `Intersects` query helpers
@@ -95,6 +96,7 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Finding Documents](./docs/find.md) | Querying with `First()` / `Find()`, `Count()`, and `Distinct()` |
 | [Updating Documents](./docs/update.md) | Single and bulk updates |
 | [Deleting Documents](./docs/delete.md) | Removing documents |
+| [Bulk Write](./docs/bulk_write.md) | Batch insert/update/replace/delete operations |
 | [Indexes](./docs/indexes.md) | Field-based index builders and geo index setup |
 | [Aggregation](./docs/aggregate.md) | Aggregation pipelines with fluent builder and typed decoding |
 | [Cursors](./docs/cursors.md) | Iterating with `FindAll()` |
