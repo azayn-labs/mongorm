@@ -32,7 +32,7 @@ func (m *MongORM[T]) getVersionField() (reflect.Value, string, bool, error) {
 
 		bsonName := strings.Split(fieldType.Tag.Get("bson"), ",")[0]
 		if bsonName == "" {
-			bsonName = fieldType.Name
+			return reflect.Value{}, "", false, configErrorf("version field must have a bson tag with a name")
 		}
 
 		sv := structValue.Field(i)
