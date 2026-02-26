@@ -177,3 +177,59 @@ func (m *MongORM[T]) Distinct(
 
 	return values, nil
 }
+
+// DistinctStrings returns distinct string values for the given field.
+func (m *MongORM[T]) DistinctStrings(
+	ctx context.Context,
+	field Field,
+	opts ...options.Lister[options.DistinctOptions],
+) ([]string, error) {
+	values, err := m.Distinct(ctx, field, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]string, len(values))
+	for i, value := range values {
+		typed, ok := value.(string)
+		if !ok {
+			return nil, fmt.Errorf("distinct value at index %d is %T, expected string", i, value)
+		}
+
+		out[i] = typed
+	}
+
+	return out, nil
+}
+
+// DistinctInt64 returns distinct integer values (as int64) for the given field.
+func (m *MongORM[T]) DistinctInt64(
+	ctx context.Context,
+	field Field,
+	opts ...options.Lister[options.DistinctOptions],
+) ([]int64, error) {
+	values, err := m.Distinct(ctx, field, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]int64, len(values))
+	for i, value := range values {
+		switch typed := value.(type) {
+		case int64:
+			out[i] = typed
+		case int32:
+			out[i] = int64(typed)
+		case int16:
+			out[i] = int64(typed)
+		case int8:
+			out[i] = int64(typed)
+		case int:
+			out[i] = int64(typed)
+		default:
+			return nil, fmt.Errorf("distinct value at index %d is %T, expected integer", i, value)
+		}
+	}
+
+	return out, nil
+}

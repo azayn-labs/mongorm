@@ -111,11 +111,14 @@ func TestMain(t *testing.T) {
 	t.Run("Distinct TODO texts by prefix", func(t *testing.T) {
 		prefix := "distinctcheck" + time.Now().Format("20060102150405")
 		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-a")})
-		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-b")})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-b"), Count: 2})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(prefix + "-c"), Count: 3})
 		defer DeleteAllLibraryTodoByText(t, prefix+"-a")
 		defer DeleteAllLibraryTodoByText(t, prefix+"-b")
+		defer DeleteAllLibraryTodoByText(t, prefix+"-c")
 
 		DistinctLibraryTodoTextByPrefix(t, prefix)
+		DistinctLibraryTodoTypedHelpers(t, prefix)
 	})
 
 	t.Run("Find with keyset pagination", func(t *testing.T) {

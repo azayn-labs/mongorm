@@ -150,6 +150,22 @@ if err != nil {
 fmt.Printf("Distinct text values: %d\n", len(values))
 ```
 
+## Typed Distinct Helpers
+
+Use typed helpers to avoid manual casting from `[]any`:
+
+```go
+texts, err := orm.DistinctStrings(ctx, ToDoFields.Text)
+if err != nil {
+    panic(err)
+}
+
+counts, err := orm.DistinctInt64(ctx, ToDoFields.Count)
+if err != nil {
+    panic(err)
+}
+```
+
 ---
 
 [Back to Documentation Index](./index.md) | [README](../README.md)

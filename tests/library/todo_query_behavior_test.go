@@ -156,6 +156,32 @@ func DistinctLibraryTodoTextByPrefix(t *testing.T, prefix string) {
 	}
 }
 
+func DistinctLibraryTodoTypedHelpers(t *testing.T, prefix string) {
+	textModel := mongorm.New(&ToDo{})
+	textModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	texts, err := textModel.DistinctStrings(t.Context(), ToDoFields.Text)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(texts) < 2 {
+		t.Fatalf("expected at least 2 distinct strings, got %d", len(texts))
+	}
+
+	countModel := mongorm.New(&ToDo{})
+	countModel.Where(ToDoFields.Text.Reg("^" + prefix))
+
+	counts, err := countModel.DistinctInt64(t.Context(), ToDoFields.Count)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(counts) < 2 {
+		t.Fatalf("expected at least 2 distinct counts, got %d", len(counts))
+	}
+}
+
 func FindLibraryTodoWithKeysetPagination(t *testing.T) {
 	prefix := fmt.Sprintf("keyset-check-%d", time.Now().UnixNano())
 
