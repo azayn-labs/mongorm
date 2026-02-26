@@ -59,3 +59,30 @@ func (m *MongORM[T]) WhereBy(field Field, value any) *MongORM[T] {
 
 	return m
 }
+
+// Sort sets the sort order for find operations. It accepts the same values supported by
+// MongoDB options, such as bson.D{{"field", 1}} or bson.M{"field": -1}.
+func (m *MongORM[T]) Sort(value any) *MongORM[T] {
+	m.operations.sort = value
+	return m
+}
+
+// Limit sets the maximum number of documents returned by find operations.
+// For First()/Find(), this value is ignored because the operation always returns one document.
+func (m *MongORM[T]) Limit(value int64) *MongORM[T] {
+	m.operations.limit = &value
+	return m
+}
+
+// Skip sets the number of documents to skip before returning results for find operations.
+func (m *MongORM[T]) Skip(value int64) *MongORM[T] {
+	m.operations.skip = &value
+	return m
+}
+
+// Projection sets the fields returned by find operations.
+// Example: bson.M{"text": 1, "count": 1}
+func (m *MongORM[T]) Projection(value any) *MongORM[T] {
+	m.operations.projection = value
+	return m
+}

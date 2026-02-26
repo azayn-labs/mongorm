@@ -44,6 +44,75 @@ orm.WhereBy(ToDoFields.Text, "Buy groceries")
 // equivalent to: orm.Where(bson.M{"text": "Buy groceries"})
 ```
 
+## Sort()
+
+`Sort()` sets sort order for find operations.
+
+```go
+// Signature
+func (m *MongORM[T]) Sort(value any) *MongORM[T]
+```
+
+Examples:
+
+```go
+orm.Sort(bson.D{{"createdAt", -1}})   // newest first
+orm.Sort(bson.M{"count": 1})          // ascending by count
+```
+
+## Limit()
+
+`Limit()` caps the number of returned documents for `FindAll()`.
+
+```go
+// Signature
+func (m *MongORM[T]) Limit(value int64) *MongORM[T]
+```
+
+```go
+orm.Limit(10)
+```
+
+> `First()`/`Find()` always return one document; `Limit()` is primarily useful with `FindAll()`.
+
+## Skip()
+
+`Skip()` skips a number of matching documents before returning results.
+
+```go
+// Signature
+func (m *MongORM[T]) Skip(value int64) *MongORM[T]
+```
+
+```go
+orm.Skip(20)
+```
+
+## Projection()
+
+`Projection()` controls which fields are returned by find operations.
+
+```go
+// Signature
+func (m *MongORM[T]) Projection(value any) *MongORM[T]
+```
+
+```go
+orm.Projection(bson.M{"text": 1, "count": 1})
+```
+
+## Combining Find Modifiers
+
+```go
+cursor, err := orm.
+    Where(ToDoFields.Text.Reg("groceries")).
+    Sort(bson.D{{"createdAt", -1}}).
+    Skip(10).
+    Limit(10).
+    Projection(bson.M{"text": 1, "createdAt": 1}).
+    FindAll(ctx)
+```
+
 ## Set()
 
 `Set()` specifies which fields to write during an update (`$set`). Pass a partial model struct with only the fields you want to change.
@@ -155,6 +224,8 @@ func main() {
     orm2.
         Where(ToDoFields.Text.Reg("groceries")).
         Where(ToDoFields.CreatedAt.Gte(cutoff)).
+        Sort(bson.D{{"createdAt", -1}}).
+        Limit(50).
         Set(update)
 
     if _, err := orm2.SaveMulti(ctx); err != nil {

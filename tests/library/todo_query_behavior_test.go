@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/CdTgr/mongorm"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -86,5 +87,41 @@ func FindAllLibraryTodoByText(t *testing.T, text string) {
 	_, err = cursor.Next(t.Context())
 	if err != nil && !errors.Is(err, io.EOF) {
 		t.Fatal(err)
+	}
+}
+
+func FindLibraryTodoWithSortLimitSkipProjection(t *testing.T) {
+	prefix := fmt.Sprintf("sorting-check-%d", time.Now().UnixNano())
+
+	todos := []*ToDo{
+		{Text: mongorm.String(prefix + "-1"), Count: 1},
+		{Text: mongorm.String(prefix + "-2"), Count: 2},
+		{Text: mongorm.String(prefix + "-3"), Count: 3},
+	}
+
+	for _, item := range todos {
+		CreateLibraryTodo(t, item)
+		defer DeleteLibraryTodoByID(t, item.ID)
+	}
+
+	toDo := &ToDo{}
+	todoModel := mongorm.New(toDo)
+	todoModel.
+		Where(ToDoFields.Text.Reg(prefix)).
+		Sort(bson.D{{Key: "count", Value: -1}}).
+		Skip(1).
+		Limit(1).
+		Projection(bson.M{"text": 1, "count": 1})
+
+	if err := todoModel.First(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	if toDo.Count != 2 {
+		t.Fatalf("expected count 2 after sort/skip/limit, got %d", toDo.Count)
+	}
+
+	if toDo.Done != nil {
+		t.Fatal("expected done to be omitted by projection")
 	}
 }

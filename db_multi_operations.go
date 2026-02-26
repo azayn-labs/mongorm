@@ -79,22 +79,58 @@ func (m *MongORM[T]) FindAll(
 		return nil, err
 	}
 
-	if opts == nil {
-		opts = []options.Lister[options.FindOptions]{
-			options.Find().SetAllowDiskUse(true),
-		}
-	} else {
-		opts = append(opts, options.Find().SetAllowDiskUse(true))
+	allOpts := []options.Lister[options.FindOptions]{
+		m.operations.findOptions(),
 	}
+	allOpts = append(allOpts, opts...)
+	allOpts = append(allOpts, options.Find().SetAllowDiskUse(true))
 
 	cursor, err := m.info.collection.Find(
 		ctx,
 		filters,
-		opts...,
+		allOpts...,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &MongORMCursor[T]{MongoCursor: cursor, m: m}, nil
+}
+
+// DeleteMulti removes all documents that match the current filters.
+// It returns a DeleteResult containing the number of removed documents.
+func (m *MongORM[T]) DeleteMulti(
+	ctx context.Context,
+	opts ...options.Lister[options.DeleteManyOptions],
+) (*mongo.DeleteResult, error) {
+	if err := m.ensureReady(); err != nil {
+		return nil, err
+	}
+
+	filter, _, err := m.withPrimaryFilters()
+	if err != nil {
+		return nil, err
+	}
+
+	schema := any(m.schema)
+	if hook, ok := schema.(BeforeDeleteHook[T]); ok {
+		if err := hook.BeforeDelete(m, &filter); err != nil {
+			return nil, err
+		}
+	}
+
+	res, err := m.info.collection.DeleteMany(ctx, filter, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	m.operations.reset()
+
+	if hook, ok := schema.(AfterDeleteHook[T]); ok {
+		if err := hook.AfterDelete(m); err != nil {
+			return nil, err
+		}
+	}
+
+	return res, nil
 }

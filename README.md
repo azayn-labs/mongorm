@@ -5,8 +5,8 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 ## Features
 
 - Type-safe model and schema definitions using Go generics
-- Fluent API for building queries with `Where()`, `Set()`, and `Unset()`
-- Full CRUD support: create, find, update (single and multi), and delete
+- Fluent API for building queries with `Where()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, `Set()`, and `Unset()`
+- Full CRUD support: create, find, update (single and multi), and delete (single and multi)
 - Lifecycle hooks for every operation (Before/After Create, Save, Update, Find, Delete, Finalize)
 - Automatic `CreatedAt` / `UpdatedAt` timestamp management
 - Flexible configuration: struct tags, options struct, or both

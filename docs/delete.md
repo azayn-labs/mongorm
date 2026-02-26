@@ -90,7 +90,24 @@ func (t *ToDo) AfterDelete(m *mongorm.MongORM[ToDo]) error {
 ## Notes
 
 - `Delete()` only removes **one** document (the first match).
-- There is no `DeleteMulti()` at this time. To delete multiple documents, iterate with `FindAll()` and call `Delete()` on each.
+
+## Delete Multiple Documents
+
+Use `DeleteMulti()` to remove all documents matching the current filters.
+
+```go
+todo := &ToDo{}
+orm  := mongorm.New(todo)
+
+result, err := orm.
+    Where(ToDoFields.Text.Reg("^temp-")).
+    DeleteMulti(ctx)
+if err != nil {
+    panic(err)
+}
+
+fmt.Printf("Deleted: %d\n", result.DeletedCount)
+```
 
 ---
 

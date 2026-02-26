@@ -1,6 +1,9 @@
 package mongorm
 
-import "go.mongodb.org/mongo-driver/v2/bson"
+import (
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+)
 
 // MongORMOperations holds the accumulated operations for a MongORM instance, including
 // query filters, update documents, and other operation-specific information. This struct
@@ -8,8 +11,12 @@ import "go.mongodb.org/mongo-driver/v2/bson"
 //
 // > NOTE: This struct is not intended for public use.
 type MongORMOperations struct {
-	query  bson.M `json:"-"`
-	update bson.M `json:"-"`
+	query      bson.M `json:"-"`
+	update     bson.M `json:"-"`
+	sort       any    `json:"-"`
+	projection any    `json:"-"`
+	limit      *int64 `json:"-"`
+	skip       *int64 `json:"-"`
 }
 
 // Resets the MongORMOperations instance to its initial state. This is useful for reusing
@@ -21,6 +28,10 @@ type MongORMOperations struct {
 func (o *MongORMOperations) reset() {
 	o.query = bson.M{}
 	o.update = bson.M{}
+	o.sort = nil
+	o.projection = nil
+	o.limit = nil
+	o.skip = nil
 }
 
 // fixUpdate ensures that the update document is properly structured for MongoDB operations.
@@ -56,4 +67,44 @@ func (o *MongORMOperations) fixQuery() {
 	if o.query == nil {
 		o.query = bson.M{}
 	}
+}
+
+func (o *MongORMOperations) findOptions() options.Lister[options.FindOptions] {
+	findOpts := options.Find()
+
+	if o.sort != nil {
+		findOpts.SetSort(o.sort)
+	}
+
+	if o.projection != nil {
+		findOpts.SetProjection(o.projection)
+	}
+
+	if o.limit != nil {
+		findOpts.SetLimit(*o.limit)
+	}
+
+	if o.skip != nil {
+		findOpts.SetSkip(*o.skip)
+	}
+
+	return findOpts
+}
+
+func (o *MongORMOperations) findOneOptions() options.Lister[options.FindOneOptions] {
+	findOneOpts := options.FindOne()
+
+	if o.sort != nil {
+		findOneOpts.SetSort(o.sort)
+	}
+
+	if o.projection != nil {
+		findOneOpts.SetProjection(o.projection)
+	}
+
+	if o.skip != nil {
+		findOneOpts.SetSkip(*o.skip)
+	}
+
+	return findOneOpts
 }

@@ -85,4 +85,17 @@ func TestMain(t *testing.T) {
 		FindAllLibraryTodoByText(t, *cursorToDo.Text)
 		DeleteLibraryTodoByID(t, cursorToDo.ID)
 	})
+
+	t.Run("Find with sort/limit/skip/projection", func(t *testing.T) {
+		FindLibraryTodoWithSortLimitSkipProjection(t)
+	})
+
+	t.Run("DeleteMulti TODOs by text", func(t *testing.T) {
+		bulkText := "bulk-delete-" + time.Now().Format(time.RFC3339Nano)
+
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(bulkText), Count: 10})
+		CreateLibraryTodo(t, &ToDo{Text: mongorm.String(bulkText), Count: 20})
+
+		DeleteAllLibraryTodoByText(t, bulkText)
+	})
 }
