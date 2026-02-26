@@ -23,7 +23,12 @@ func (m *MongORM[T]) BulkWrite(
 		return nil, fmt.Errorf("bulk write requires at least one write model")
 	}
 
-	return m.info.collection.BulkWrite(ctx, models, opts...)
+	result, err := m.info.collection.BulkWrite(ctx, models, opts...)
+	if err != nil {
+		return nil, normalizeError(err)
+	}
+
+	return result, nil
 }
 
 // BulkWriteInTransaction executes a bulk write operation inside a transaction.

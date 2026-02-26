@@ -106,6 +106,11 @@ func (m *MongORM[T]) Save(
 	}
 
 	if id != nil || len(filter) > 0 {
+		optimisticLockEnabled, err := m.applyOptimisticLock(&filter, &m.operations.update)
+		if err != nil {
+			return err
+		}
+
 		// Update existing document
 		if hook, ok := schema.(BeforeSaveHook[T]); ok {
 			if err := hook.BeforeSave(m, &filter); err != nil {
@@ -117,6 +122,7 @@ func (m *MongORM[T]) Save(
 			ctx,
 			&filter,
 			&m.operations.update,
+			optimisticLockEnabled,
 			opts...,
 		); err != nil {
 			return err

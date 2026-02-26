@@ -6,6 +6,7 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 
 - Type-safe model and schema definitions using Go generics
 - Fluent API for building queries with `Where()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, keyset pagination helpers, `Set()`, and `Unset()`
+- Typed projection decoding for DTO targets via `FindOneAs[T, R]()` and `FindAllAs[T, R]()`
 - Full CRUD support: create, find, update (single and multi), and delete (single and multi)
 - Bulk write support with typed builder helpers via `BulkWrite()`, `BulkWriteInTransaction()`, and `NewBulkWriteBuilder[T]()`
 - Aggregation support: raw pipelines and fluent stage builder via `Aggregate()`, `AggregateRaw()`, `AggregateAs[T, R]()`, and `AggregatePipeline()`
@@ -13,6 +14,8 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 - Geospatial support: `GeoField` with `Near`, `Within`, and `Intersects` query helpers
 - Index support: field-driven builders, `Ensure2DSphereIndex()`, and `EnsureGeoDefaults()`
 - Transactions: `WithTransaction()` for atomic multi-operation workflows
+- Optimistic locking via `mongorm:"version"` (`_version`) and `ErrOptimisticLockConflict`
+- Error taxonomy with sentinels: `ErrNotFound`, `ErrDuplicateKey`, `ErrInvalidConfig`, `ErrTransactionUnsupported`
 - Lifecycle hooks for every operation (Before/After Create, Save, Update, Find, Delete, Finalize)
 - Automatic `CreatedAt` / `UpdatedAt` timestamp management
 - Flexible configuration: struct tags, options struct, or both
@@ -104,6 +107,7 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Primitives](./docs/primitives.md) | Type-safe field query methods |
 | [Hooks](./docs/hooks.md) | Lifecycle hooks |
 | [Transactions](./docs/transactions.md) | Running operations in MongoDB transactions |
+| [Errors](./docs/errors.md) | Sentinel errors and handling patterns |
 | [Timestamps](./docs/timestamps.md) | Automatic `CreatedAt` / `UpdatedAt` |
 | [Utility Types](./docs/types.md) | Pointer helpers |
 

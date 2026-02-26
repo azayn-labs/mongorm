@@ -12,6 +12,11 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
+type toDoProjection struct {
+	Text  *string `bson:"text,omitempty"`
+	Count int64   `bson:"count,omitempty"`
+}
+
 func FindLibraryTodoByTextWhereBy(t *testing.T, text string) {
 	logger(t, fmt.Sprintf("[TODO] Finding by text using WhereBy: %s\n", text))
 
@@ -124,6 +129,47 @@ func FindLibraryTodoWithSortLimitSkipProjection(t *testing.T) {
 
 	if toDo.Done != nil {
 		t.Fatal("expected done to be omitted by projection")
+	}
+}
+
+func FindLibraryTodoWithTypedProjection(t *testing.T) {
+	prefix := fmt.Sprintf("projection-dto-%d", time.Now().UnixNano())
+
+	first := &ToDo{Text: mongorm.String(prefix + "-a"), Count: 11}
+	second := &ToDo{Text: mongorm.String(prefix + "-b"), Count: 22}
+
+	CreateLibraryTodo(t, first)
+	CreateLibraryTodo(t, second)
+	defer DeleteLibraryTodoByID(t, first.ID)
+	defer DeleteLibraryTodoByID(t, second.ID)
+
+	oneModel := mongorm.New(&ToDo{})
+	oneModel.
+		WhereBy(ToDoFields.Text, prefix+"-b").
+		Projection(bson.M{ToDoFields.Text.BSONName(): 1, ToDoFields.Count.BSONName(): 1})
+
+	one, err := mongorm.FindOneAs[ToDo, toDoProjection](oneModel, t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if one.Text == nil || *one.Text != prefix+"-b" {
+		t.Fatal("expected projected dto text for single result")
+	}
+
+	allModel := mongorm.New(&ToDo{})
+	allModel.
+		Where(ToDoFields.Text.Reg("^" + prefix)).
+		Sort(bson.D{{Key: ToDoFields.Count.BSONName(), Value: 1}}).
+		Projection(bson.M{ToDoFields.Text.BSONName(): 1, ToDoFields.Count.BSONName(): 1})
+
+	rows, err := mongorm.FindAllAs[ToDo, toDoProjection](allModel, t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(rows) < 2 {
+		t.Fatalf("expected at least 2 projected rows, got %d", len(rows))
 	}
 }
 
