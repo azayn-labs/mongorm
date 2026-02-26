@@ -13,7 +13,7 @@ func (m *MongORM[T]) getVersionField() (reflect.Value, string, bool, error) {
 	}
 
 	v := reflect.ValueOf(m.schema)
-	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
 		return reflect.Value{}, "", false, configErrorf("schema must be a pointer to struct")
 	}
 
@@ -26,12 +26,21 @@ func (m *MongORM[T]) getVersionField() (reflect.Value, string, bool, error) {
 			continue
 		}
 
+		if fieldType.PkgPath != "" {
+			return reflect.Value{}, "", false, configErrorf("version field must be exported")
+		}
+
 		bsonName := strings.Split(fieldType.Tag.Get("bson"), ",")[0]
 		if bsonName == "" {
 			bsonName = fieldType.Name
 		}
 
-		return structValue.Field(i), bsonName, true, nil
+		sv := structValue.Field(i)
+		if !sv.CanSet() || !sv.CanAddr() {
+			return reflect.Value{}, "", false, configErrorf("version field must be settable and addressable")
+		}
+
+		return sv, bsonName, true, nil
 	}
 
 	return reflect.Value{}, "", false, nil
@@ -42,7 +51,7 @@ func readVersionValue(field reflect.Value) (int64, bool, error) {
 		return 0, false, nil
 	}
 
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		if field.IsNil() {
 			return 0, false, nil
 		}
@@ -63,15 +72,31 @@ func setVersionValue(field reflect.Value, version int64) error {
 		return nil
 	}
 
-	if field.Kind() == reflect.Ptr {
+	if !field.CanAddr() {
+		return configErrorf("version field must be addressable")
+	}
+
+	if field.Kind() == reflect.Pointer {
+		if !field.CanSet() {
+			return configErrorf("version field must be settable")
+		}
+
 		if field.IsNil() {
 			field.Set(reflect.New(field.Type().Elem()))
 		}
 		field = field.Elem()
 	}
 
+	if !field.CanSet() || !field.CanAddr() {
+		return configErrorf("version field must be settable and addressable")
+	}
+
 	switch field.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if field.OverflowInt(version) {
+			return configErrorf("version value overflows field type")
+		}
+
 		field.SetInt(version)
 		return nil
 	default:
