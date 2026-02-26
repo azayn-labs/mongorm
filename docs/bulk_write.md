@@ -1,6 +1,6 @@
 # Bulk Write
 
-MongORM supports batch write operations using MongoDB bulk writes.
+MongORM supports high-throughput batch write operations using MongoDB bulk writes. This is ideal for ingestion jobs, migration scripts, and backend tasks that need efficient multi-operation execution.
 
 ## Execute Bulk Write
 

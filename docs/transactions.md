@@ -1,6 +1,6 @@
 # Transactions
 
-MongORM provides a simple transaction wrapper so multiple operations can run atomically.
+MongORM provides a clean transaction wrapper for atomic, multi-step workflows. It is designed for production-critical flows where data consistency matters across multiple writes.
 
 ## WithTransaction
 

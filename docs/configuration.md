@@ -1,6 +1,6 @@
 # Configuration
 
-MongORM supports three configuration modes. All three can be mixed together.
+MongORM supports three flexible configuration modes so teams can choose static, runtime, or hybrid connection management patterns. All modes can be combined, making it easy to evolve from local development setups to production deployment environments.
 
 ## Mode A — Struct Tags
 

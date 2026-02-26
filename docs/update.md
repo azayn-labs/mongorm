@@ -1,6 +1,6 @@
 # Updating Documents
 
-MongORM supports two update modes: updating a **single** document with `Save()` / `Update()`, and updating **multiple** documents with `SaveMulti()`.
+MongORM supports robust MongoDB update workflows for both **single** and **multiple** documents. Use `Save()` / `Update()` for focused writes and `SaveMulti()` for efficient batch-style updates with the same fluent, type-safe developer experience.
 
 ## Update a Single Document
 

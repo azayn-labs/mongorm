@@ -1,6 +1,6 @@
 # Finding Documents
 
-Use `First()` (or its alias `Find()`) to retrieve a single document matching your filter. Build the filter using `Where()` with type-safe field methods from the schema.
+Use `First()` (or its alias `Find()`) to retrieve a single document matching your filter with a clean, type-safe API. Build filters with `Where()` and schema primitives to keep query logic expressive, composable, and production-friendly.
 
 ## Find by Primary Key
 

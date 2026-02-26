@@ -1,6 +1,10 @@
 # MongORM
 
-MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a convenient way to interact with MongoDB databases using Go structs, generics, and a fluent method API.
+> Open source by **Azayn Labs** — Home: [azayn.com](https://azayn.com)
+
+MongORM is a production-ready, type-safe MongoDB ORM for Go that combines generics, fluent query building, and predictable data modeling. It helps Go teams ship faster with clean CRUD workflows, typed filters, aggregation support, and transaction-safe operations.
+
+If you are building backend APIs, SaaS products, internal tools, or data-heavy services on MongoDB, MongORM gives you a high-signal developer experience without hiding core MongoDB power.
 
 ## Features
 
@@ -22,6 +26,14 @@ MongORM is a lightweight, type-safe ORM library for MongoDB in Go. It provides a
 - Cursor-based iteration for large result sets
 - Connection pooling — clients are reused by connection string
 - Lightweight with a single dependency: the official MongoDB Go driver
+
+## Why teams choose MongORM
+
+- **Type-safe by default:** schema primitives and generics reduce runtime query mistakes.
+- **Fast developer velocity:** fluent APIs for filtering, updates, aggregation, and bulk workflows.
+- **Production-focused reliability:** transactions, optimistic locking, timestamps, hooks, and clear error taxonomy.
+- **MongoDB-native flexibility:** raw BSON compatibility when you need full control.
+- **Clean architecture fit:** works naturally with service layers, repository patterns, and domain models.
 
 ## Installation
 
@@ -112,6 +124,32 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Utility Types](./docs/types.md) | Pointer helpers |
 
 HTML documentation is available at [`html_docs/index.html`](./html_docs/index.html).
+
+## Keywords
+
+Go MongoDB ORM, Golang MongoDB ORM, type-safe MongoDB query builder for Go, Go generics ORM, MongoDB CRUD library for Go, MongoDB transactions in Go, MongoDB aggregation in Go, MongoDB bulk write Go, MongoDB hooks and timestamps, lightweight Go ORM.
+
+## GitHub SEO Pack
+
+Use these when publishing the repository to maximize discoverability in GitHub search and community feeds.
+
+### Repository Description (pick one)
+
+- Production-ready, type-safe MongoDB ORM for Go with generics, fluent query building, transactions, aggregation, and bulk operations.
+- Type-safe MongoDB ORM for Go: fluent CRUD, typed filters, aggregation pipelines, bulk writes, hooks, and transaction support.
+- Lightweight Golang MongoDB ORM with generics, query builder, optimistic locking, timestamps, and production-friendly data workflows.
+
+### Suggested GitHub Topics
+
+`go`, `golang`, `mongodb`, `orm`, `mongo-orm`, `golang-library`, `backend`, `query-builder`, `type-safe`, `generics`, `aggregation`, `transactions`, `bulk-write`, `developer-tools`, `data-access`
+
+### Launch Checklist
+
+- Set repository description using one of the options above.
+- Add the suggested topic tags in GitHub repository settings.
+- Publish `v1.0.0` as the first stable release using `.github/RELEASE_TEMPLATE.md`.
+- Pin a concise usage example in the release body (create + find + update).
+- Share release in Go and MongoDB communities with keywords from this README.
 
 ## Geo Index Defaults Example
 

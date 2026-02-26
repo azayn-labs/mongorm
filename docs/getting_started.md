@@ -1,5 +1,7 @@
 # Getting Started
 
+This guide helps you launch a production-ready Go + MongoDB data layer with MongORM in minutes. You will set up strongly typed models, schema primitives, and fluent query accessors that scale cleanly from MVP to larger backend services.
+
 ## Installation
 
 ```bash
@@ -8,7 +10,7 @@ go get github.com/CdTgr/mongorm
 
 ## Define a Model
 
-A model is a regular Go struct with `bson` tags (for MongoDB field mapping) and `mongorm` tags (for ORM behavior). All pointer fields are recommended so MongORM can distinguish zero values from intentionally set values.
+A model is a regular Go struct with `bson` tags (for MongoDB field mapping) and `mongorm` tags (for ORM behavior). Pointer fields are recommended so MongORM can distinguish zero values from intentionally set values, which is especially useful for partial updates and precise write semantics.
 
 ```go
 package main

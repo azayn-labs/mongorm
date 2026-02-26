@@ -1,6 +1,6 @@
 # Query Building
 
-MongORM provides a fluent API for building MongoDB query filters. Filters are accumulated via method chaining and executed when you call a database operation.
+MongORM provides a high-productivity, type-safe query builder for MongoDB in Go. Filters and modifiers are composed with fluent chaining, then executed through the same ORM instance for clear, readable, and maintainable data access code.
 
 ## Where()
 

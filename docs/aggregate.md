@@ -1,6 +1,6 @@
 # Aggregation
 
-MongORM supports MongoDB aggregation pipelines with both cursor-based and typed-result APIs.
+MongORM supports MongoDB aggregation pipelines with both cursor-based and typed-result APIs, so you can move from analytics-style queries to application-ready DTOs with minimal boilerplate.
 
 ## Aggregate()
 
