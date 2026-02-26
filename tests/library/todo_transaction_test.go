@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 	"time"
 
@@ -26,7 +25,7 @@ func ValidateLibraryTransactions(t *testing.T) {
 		return rollbackErr
 	})
 
-	if isTransactionUnsupported(err) {
+	if mongorm.IsTransactionUnsupported(err) {
 		t.Skipf("transactions unsupported by current mongodb setup: %v", err)
 	}
 
@@ -63,26 +62,4 @@ func ValidateLibraryTransactions(t *testing.T) {
 	}
 
 	DeleteAllLibraryTodoByText(t, commitText)
-}
-
-func isTransactionUnsupported(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	message := strings.ToLower(err.Error())
-
-	if strings.Contains(message, "transaction numbers are only allowed") {
-		return true
-	}
-
-	if strings.Contains(message, "transactions are not supported") {
-		return true
-	}
-
-	if strings.Contains(message, "replica set") && strings.Contains(message, "transaction") {
-		return true
-	}
-
-	return false
 }
