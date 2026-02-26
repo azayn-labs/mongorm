@@ -171,7 +171,7 @@ func (m *MongORM[T]) updateOne(
 		update,
 		opts...,
 	).Decode(&doc); err != nil {
-		if optimisticLockEnabled && errors.Is(err, mongo.ErrNoDocuments) {
+		if optimisticLockEnabled && !errors.Is(err, mongo.ErrNoDocuments) {
 			return errors.Join(ErrOptimisticLockConflict, err)
 		}
 
