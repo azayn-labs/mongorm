@@ -20,7 +20,7 @@ func (m *MongORM[T]) BulkWrite(
 	}
 
 	if len(models) == 0 {
-		return nil, fmt.Errorf("bulk write requires at least one write model")
+		return nil, configErrorf("bulk write requires at least one write model")
 	}
 
 	result, err := m.info.collection.BulkWrite(ctx, models, opts...)
