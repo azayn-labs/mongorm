@@ -48,14 +48,14 @@ type MongORMCursor[T any] struct {
 func (c *MongORMCursor[T]) Next(ctx context.Context) (*MongORM[T], error) {
 	if !c.MongoCursor.Next(ctx) {
 		if err := c.MongoCursor.Err(); err != nil {
-			return nil, err
+			return nil, normalizeError(err)
 		}
 		return nil, io.EOF
 	}
 
 	var u T
 	if err := c.MongoCursor.Decode(&u); err != nil {
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	clone := c.m.clone()
@@ -81,7 +81,7 @@ func (c *MongORMCursor[T]) Next(ctx context.Context) (*MongORM[T], error) {
 func (c *MongORMCursor[T]) All(ctx context.Context) ([]*MongORM[T], error) {
 	var results []T
 	if err := c.MongoCursor.All(ctx, &results); err != nil {
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	clones := make([]*MongORM[T], len(results))
@@ -105,5 +105,5 @@ func (c *MongORMCursor[T]) All(ctx context.Context) ([]*MongORM[T], error) {
 //	    // Handle error
 //	}
 func (c *MongORMCursor[T]) Close(ctx context.Context) error {
-	return c.MongoCursor.Close(ctx)
+	return normalizeError(c.MongoCursor.Close(ctx))
 }

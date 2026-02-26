@@ -2,7 +2,6 @@ package mongorm
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -22,7 +21,7 @@ func (m *MongORM[T]) WithTransaction(
 	}
 
 	if fn == nil {
-		return fmt.Errorf("transaction callback cannot be nil")
+		return configErrorf("transaction callback cannot be nil")
 	}
 
 	client, err := m.client()
@@ -53,7 +52,7 @@ func (m *MongORM[T]) WithTransaction(
 
 func (m *MongORM[T]) client() (*mongo.Client, error) {
 	if m == nil {
-		return nil, fmt.Errorf("mongorm instance is nil")
+		return nil, configErrorf("mongorm instance is nil")
 	}
 
 	if m.options != nil && m.options.MongoClient != nil {
@@ -64,5 +63,5 @@ func (m *MongORM[T]) client() (*mongo.Client, error) {
 		return m.info.db.Client(), nil
 	}
 
-	return nil, fmt.Errorf("mongodb client is not initialized")
+	return nil, configErrorf("mongodb client is not initialized")
 }
