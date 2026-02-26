@@ -2,7 +2,6 @@ package mongorm
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -58,7 +57,7 @@ func castDistinctValue[V any](value any, targetType reflect.Type) (V, error) {
 	var zero V
 
 	if value == nil {
-		return zero, fmt.Errorf("value is nil")
+		return zero, configErrorf("value is nil")
 	}
 
 	if direct, ok := value.(V); ok {
@@ -103,7 +102,7 @@ func castDistinctValue[V any](value any, targetType reflect.Type) (V, error) {
 		case string:
 			id, err := bson.ObjectIDFromHex(typed)
 			if err != nil {
-				return zero, fmt.Errorf("invalid objectid hex: %w", err)
+				return zero, configErrorf("invalid objectid hex: %v", err)
 			}
 			return assertDistinctType[V](id)
 		}
@@ -128,7 +127,7 @@ func castDistinctValue[V any](value any, targetType reflect.Type) (V, error) {
 		}
 	}
 
-	return zero, fmt.Errorf("value type %T cannot be converted", value)
+	return zero, configErrorf("value type %T cannot be converted", value)
 }
 
 func assertDistinctType[V any](value any) (V, error) {
@@ -136,7 +135,7 @@ func assertDistinctType[V any](value any) (V, error) {
 
 	typed, ok := value.(V)
 	if !ok {
-		return zero, fmt.Errorf("value type %T cannot be asserted", value)
+		return zero, configErrorf("value type %T cannot be asserted", value)
 	}
 
 	return typed, nil

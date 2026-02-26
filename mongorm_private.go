@@ -1,14 +1,10 @@
 package mongorm
 
-import (
-	"fmt"
-
-	"go.mongodb.org/mongo-driver/v2/bson"
-)
+import "go.mongodb.org/mongo-driver/v2/bson"
 
 func (m *MongORM[T]) ensureReady() error {
 	if m == nil {
-		return fmt.Errorf("mongorm instance is nil")
+		return configErrorf("mongorm instance is nil")
 	}
 
 	if m.initErr != nil {
@@ -16,7 +12,7 @@ func (m *MongORM[T]) ensureReady() error {
 	}
 
 	if m.info == nil || m.info.collection == nil {
-		return fmt.Errorf("mongodb collection is not initialized")
+		return configErrorf("mongodb collection is not initialized")
 	}
 
 	return nil
