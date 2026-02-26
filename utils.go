@@ -69,52 +69,52 @@ func castDistinctValue[V any](value any, targetType reflect.Type) (V, error) {
 	case int64:
 		switch typed := value.(type) {
 		case int64:
-			return any(typed).(V), nil
+			return assertDistinctType[V](typed)
 		case int32:
-			return any(int64(typed)).(V), nil
+			return assertDistinctType[V](int64(typed))
 		case int16:
-			return any(int64(typed)).(V), nil
+			return assertDistinctType[V](int64(typed))
 		case int8:
-			return any(int64(typed)).(V), nil
+			return assertDistinctType[V](int64(typed))
 		case int:
-			return any(int64(typed)).(V), nil
+			return assertDistinctType[V](int64(typed))
 		}
 	case float64:
 		switch typed := value.(type) {
 		case float64:
-			return any(typed).(V), nil
+			return assertDistinctType[V](typed)
 		case float32:
-			return any(float64(typed)).(V), nil
+			return assertDistinctType[V](float64(typed))
 		case int64:
-			return any(float64(typed)).(V), nil
+			return assertDistinctType[V](float64(typed))
 		case int32:
-			return any(float64(typed)).(V), nil
+			return assertDistinctType[V](float64(typed))
 		case int16:
-			return any(float64(typed)).(V), nil
+			return assertDistinctType[V](float64(typed))
 		case int8:
-			return any(float64(typed)).(V), nil
+			return assertDistinctType[V](float64(typed))
 		case int:
-			return any(float64(typed)).(V), nil
+			return assertDistinctType[V](float64(typed))
 		}
 	case bson.ObjectID:
 		switch typed := value.(type) {
 		case bson.ObjectID:
-			return any(typed).(V), nil
+			return assertDistinctType[V](typed)
 		case string:
 			id, err := bson.ObjectIDFromHex(typed)
 			if err != nil {
 				return zero, fmt.Errorf("invalid objectid hex: %w", err)
 			}
-			return any(id).(V), nil
+			return assertDistinctType[V](id)
 		}
 	case time.Time:
 		switch typed := value.(type) {
 		case time.Time:
-			return any(typed).(V), nil
+			return assertDistinctType[V](typed)
 		case interface{ Time() time.Time }:
-			return any(typed.Time()).(V), nil
+			return assertDistinctType[V](typed.Time())
 		case int64:
-			return any(time.UnixMilli(typed)).(V), nil
+			return assertDistinctType[V](time.UnixMilli(typed))
 		}
 	}
 
@@ -129,4 +129,15 @@ func castDistinctValue[V any](value any, targetType reflect.Type) (V, error) {
 	}
 
 	return zero, fmt.Errorf("value type %T cannot be converted", value)
+}
+
+func assertDistinctType[V any](value any) (V, error) {
+	var zero V
+
+	typed, ok := value.(V)
+	if !ok {
+		return zero, fmt.Errorf("value type %T cannot be asserted", value)
+	}
+
+	return typed, nil
 }
