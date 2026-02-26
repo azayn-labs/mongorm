@@ -13,6 +13,7 @@ type ToDo struct {
 	Text      *string           `json:"text,omitempty" bson:"text,omitempty"`
 	Done      *bool             `json:"done,omitempty" bson:"done,omitempty"`
 	Count     int64             `json:"count,omitempty" bson:"count,omitempty"`
+	Version   int64             `json:"version,omitempty" bson:"_version,omitempty" mongorm:"version"`
 	Location  *mongorm.GeoPoint `json:"location,omitempty" bson:"location,omitempty"`
 	CreatedAt *time.Time        `json:"createdAt,omitempty" bson:"createdAt,omitempty"`
 
@@ -26,6 +27,7 @@ type ToDoSchema struct {
 	Text      *primitives.StringField
 	Done      *primitives.BoolField
 	Count     *primitives.Int64Field
+	Version   *primitives.Int64Field
 	Location  *primitives.GeoField
 	CreatedAt *primitives.TimestampField
 }

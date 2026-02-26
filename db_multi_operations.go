@@ -47,7 +47,7 @@ func (m *MongORM[T]) SaveMulti(
 		opts...,
 	)
 	if err != nil {
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	return res, err
@@ -79,7 +79,7 @@ func (m *MongORM[T]) FindAll(
 
 	filters, _, err := m.withPrimaryFilters()
 	if err != nil {
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	allOpts := []options.Lister[options.FindOptions]{
@@ -124,7 +124,7 @@ func (m *MongORM[T]) DeleteMulti(
 
 	res, err := m.info.collection.DeleteMany(ctx, filter, opts...)
 	if err != nil {
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	m.operations.reset()
@@ -152,7 +152,12 @@ func (m *MongORM[T]) Count(
 		return 0, err
 	}
 
-	return m.info.collection.CountDocuments(ctx, filter, opts...)
+	count, err := m.info.collection.CountDocuments(ctx, filter, opts...)
+	if err != nil {
+		return 0, normalizeError(err)
+	}
+
+	return count, nil
 }
 
 // Distinct returns all unique values of the given field among documents
@@ -175,7 +180,7 @@ func (m *MongORM[T]) Distinct(
 
 	values := []any{}
 	if err := result.Decode(&values); err != nil {
-		return nil, err
+		return nil, normalizeError(err)
 	}
 
 	return values, nil
@@ -296,7 +301,12 @@ func (m *MongORM[T]) AggregateRaw(
 
 	allOpts := append(opts, options.Aggregate().SetAllowDiskUse(true))
 
-	return m.info.collection.Aggregate(ctx, finalPipeline, allOpts...)
+	cursor, err := m.info.collection.Aggregate(ctx, finalPipeline, allOpts...)
+	if err != nil {
+		return nil, normalizeError(err)
+	}
+
+	return cursor, nil
 }
 
 // AggregateAs runs an aggregation pipeline and decodes the results into a typed slice.
