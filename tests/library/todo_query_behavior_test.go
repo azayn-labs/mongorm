@@ -1,9 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"testing"
 	"time"
 
@@ -81,18 +79,121 @@ func FindAllLibraryTodoByText(t *testing.T, text string) {
 	}
 	defer cursor.Close(t.Context())
 
-	first, err := cursor.Next(t.Context())
+	if !cursor.Next(t.Context()) {
+		if err := cursor.Err(); err != nil {
+			t.Fatal(err)
+		}
+		t.Fatal("expected at least one cursor document")
+	}
+
+	first := cursor.Current()
+	if first == nil {
+		t.Fatal("expected current cursor item after successful Next")
+	}
+
+	if first.Document() == nil || first.Document().Text == nil || *first.Document().Text != text {
+		t.Fatal("expected first cursor document with requested text")
+	}
+
+	if cursor.Next(t.Context()) {
+		t.Fatal("expected cursor to be exhausted on second Next")
+	}
+
+	if err := cursor.Err(); err != nil {
+		t.Fatal(err)
+	}
+
+	if item := cursor.Current(); item != nil {
+		t.Fatal("expected current item to be nil after exhaustion")
+	}
+}
+
+func CursorAllReturnsDistinctDocuments(t *testing.T) {
+	prefix := fmt.Sprintf("cursor-all-distinct-%d", time.Now().UnixNano())
+
+	first := &ToDo{Text: mongorm.String(prefix + "-a"), Count: 101}
+	second := &ToDo{Text: mongorm.String(prefix + "-b"), Count: 202}
+
+	CreateLibraryTodo(t, first)
+	CreateLibraryTodo(t, second)
+	defer DeleteLibraryTodoByID(t, first.ID)
+	defer DeleteLibraryTodoByID(t, second.ID)
+
+	model := mongorm.New(&ToDo{})
+	model.
+		Where(ToDoFields.Text.Reg("^" + prefix)).
+		Sort(bson.D{{Key: ToDoFields.Count.BSONName(), Value: 1}})
+
+	cursor, err := model.FindAll(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cursor.Close(t.Context())
+
+	items, err := cursor.All(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if first == nil || first.Document() == nil || first.Document().Text == nil || *first.Document().Text != text {
-		t.Fatal("expected first cursor document with requested text")
+	if len(items) != 2 {
+		t.Fatalf("expected exactly 2 cursor items, got %d", len(items))
 	}
 
-	_, err = cursor.Next(t.Context())
-	if err != nil && !errors.Is(err, io.EOF) {
+	if items[0] == nil || items[1] == nil || items[0].Document() == nil || items[1].Document() == nil {
+		t.Fatal("expected decoded documents from cursor.All")
+	}
+
+	if items[0].Document() == items[1].Document() {
+		t.Fatal("expected distinct document pointers from cursor.All")
+	}
+
+	if items[0].Document().Count == items[1].Document().Count {
+		t.Fatalf("expected distinct decoded document values, got identical counts: %d", items[0].Document().Count)
+	}
+
+	if items[0].Document().Count != 101 || items[1].Document().Count != 202 {
+		t.Fatalf("expected sorted counts [101, 202], got [%d, %d]", items[0].Document().Count, items[1].Document().Count)
+	}
+}
+
+func CursorCurrentClearedAfterExhaustion(t *testing.T) {
+	text := fmt.Sprintf("cursor-current-clear-%d", time.Now().UnixNano())
+
+	todo := &ToDo{Text: mongorm.String(text), Count: 1}
+	CreateLibraryTodo(t, todo)
+	defer DeleteLibraryTodoByID(t, todo.ID)
+
+	model := mongorm.New(&ToDo{})
+	model.WhereBy(ToDoFields.Text, text)
+
+	cursor, err := model.FindAll(t.Context())
+	if err != nil {
 		t.Fatal(err)
+	}
+	defer cursor.Close(t.Context())
+
+	if !cursor.Next(t.Context()) {
+		if err := cursor.Err(); err != nil {
+			t.Fatal(err)
+		}
+		t.Fatal("expected first cursor document")
+	}
+
+	first := cursor.Current()
+	if first == nil || first.Document() == nil || first.Document().Text == nil || *first.Document().Text != text {
+		t.Fatal("expected current document after successful Next")
+	}
+
+	if cursor.Next(t.Context()) {
+		t.Fatal("expected cursor to be exhausted on second Next")
+	}
+
+	if err := cursor.Err(); err != nil {
+		t.Fatal(err)
+	}
+
+	if current := cursor.Current(); current != nil {
+		t.Fatal("expected Current() to be nil after exhaustion")
 	}
 }
 
@@ -364,9 +465,16 @@ func AggregateLibraryTodoByText(t *testing.T, text string) {
 	}
 	defer cursor.Close(t.Context())
 
-	item, err := cursor.Next(t.Context())
-	if err != nil {
-		t.Fatal(err)
+	if !cursor.Next(t.Context()) {
+		if err := cursor.Err(); err != nil {
+			t.Fatal(err)
+		}
+		t.Fatal("expected aggregate cursor item")
+	}
+
+	item := cursor.Current()
+	if item == nil {
+		t.Fatal("expected aggregate current item after successful Next")
 	}
 
 	if item.Document() == nil || item.Document().Count != 3 {
@@ -415,9 +523,16 @@ func AggregateLibraryTodoByBuilderOperators(t *testing.T, text string) {
 	}
 	defer cursor.Close(t.Context())
 
-	item, err := cursor.Next(t.Context())
-	if err != nil {
-		t.Fatal(err)
+	if !cursor.Next(t.Context()) {
+		if err := cursor.Err(); err != nil {
+			t.Fatal(err)
+		}
+		t.Fatal("expected aggregate pipeline cursor item")
+	}
+
+	item := cursor.Current()
+	if item == nil {
+		t.Fatal("expected aggregate pipeline current item after successful Next")
 	}
 
 	if item.Document() == nil || item.Document().Count != 3 {

@@ -94,6 +94,14 @@ func TestMain(t *testing.T) {
 		DeleteLibraryTodoByID(t, cursorToDo.ID)
 	})
 
+	t.Run("Cursor All returns distinct documents", func(t *testing.T) {
+		CursorAllReturnsDistinctDocuments(t)
+	})
+
+	t.Run("Cursor Current clears after exhaustion", func(t *testing.T) {
+		CursorCurrentClearedAfterExhaustion(t)
+	})
+
 	t.Run("Find with sort/limit/skip/projection", func(t *testing.T) {
 		FindLibraryTodoWithSortLimitSkipProjection(t)
 	})

@@ -10,7 +10,6 @@ package main
 import (
     "context"
     "fmt"
-    "io"
 
     "github.com/azayn-labs/mongorm"
     "github.com/azayn-labs/mongorm/primitives"
@@ -45,16 +44,17 @@ func main() {
     }
     defer cursor.Close(ctx)
 
-    for {
-        item, err := cursor.Next(ctx)
-        if err != nil {
-            if err == io.EOF {
-                break // no more documents
-            }
-            panic(err)
+    for cursor.Next(ctx) {
+        item := cursor.Current()
+        if item == nil {
+            continue
         }
 
         fmt.Printf("Document: %+v\n", item.Document())
+    }
+
+    if err := cursor.Err(); err != nil {
+        panic(err)
     }
 }
 ```
@@ -94,19 +94,25 @@ for _, item := range items {
 
 | Method | Returns | Description |
 | --- | --- | --- |
-| `Next(ctx)` | `(*MongORM[T], error)` | Advance and decode next document. Returns `io.EOF` when exhausted. |
+| `Next(ctx)` | `bool` | Advance and decode the next document. Returns `false` when exhausted or on error. |
+| `Current()` | `*MongORM[T]` | Return the current decoded document after a successful `Next(ctx)`. |
+| `Err()` | `error` | Return the last cursor error after iteration ends. |
 | `All(ctx)` | `([]*MongORM[T], error)` | Decode all remaining documents into a slice. |
 | `Close(ctx)` | `error` | Close cursor and release server-side resources. |
 
 ## Accessing Documents
 
-Each item returned by `Next()` or `All()` is a `*MongORM[T]` instance. Access the decoded struct via `Document()`:
+Each item returned by `Current()` or `All()` is a `*MongORM[T]` instance. Access the decoded struct via `Document()`:
 
 ```go
-item, err := cursor.Next(ctx)
-if err == nil {
+if cursor.Next(ctx) {
+    item := cursor.Current()
     doc := item.Document()  // *ToDo
     fmt.Println(*doc.Text)
+}
+
+if err := cursor.Err(); err != nil {
+    panic(err)
 }
 ```
 

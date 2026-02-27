@@ -2,7 +2,6 @@ package mongorm
 
 import (
 	"context"
-	"io"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -27,41 +26,82 @@ import (
 type MongORMCursor[T any] struct {
 	MongoCursor *mongo.Cursor `json:"-"`
 	m           *MongORM[T]   `json:"-"`
+	current     *T            `json:"-"`
+	err         error         `json:"-"`
 }
 
 // Next advances the cursor to the next document and decodes it into a new MongORM instance.
-// It returns io.EOF when there are no more documents to read. The caller is responsible
+// It returns false when there are no more documents to read or when an error occurs.
+// Call Err to inspect the last cursor error after iteration ends. The caller is responsible
 // for closing the cursor when done. The context can be used to cancel the operation if needed.
 //
 // Example usage:
 //
-//	cursor, err := mongormCursor.Next(ctx)
-//	if err != nil {
-//	    if errors.Is(err, io.EOF) {
-//	        // No more documents
-//	    } else {
-//	        // Handle error
+//	for mongormCursor.Next(ctx) {
+//	    current := mongormCursor.Current()
+//	    if current != nil {
+//	        // Use current
 //	    }
-//	} else {
-//	    // Use the cursor
 //	}
-func (c *MongORMCursor[T]) Next(ctx context.Context) (*MongORM[T], error) {
-	if !c.MongoCursor.Next(ctx) {
-		if err := c.MongoCursor.Err(); err != nil {
-			return nil, normalizeError(err)
+func (c *MongORMCursor[T]) Next(ctx context.Context) bool {
+	if c == nil || c.MongoCursor == nil {
+		if c != nil {
+			c.current = nil
+			c.err = configErrorf("cursor is nil")
 		}
-		return nil, io.EOF
+		return false
+	}
+
+	c.current = nil
+	c.err = nil
+
+	if !c.MongoCursor.Next(ctx) {
+		c.err = normalizeError(c.MongoCursor.Err())
+		return false
 	}
 
 	var u T
 	if err := c.MongoCursor.Decode(&u); err != nil {
-		return nil, normalizeError(err)
+		c.err = normalizeError(err)
+		return false
+	}
+	c.current = &u
+
+	return true
+}
+
+// Err returns the most recent cursor error observed by Next or All.
+func (c *MongORMCursor[T]) Err() error {
+	if c == nil {
+		return configErrorf("cursor is nil")
+	}
+
+	return c.err
+}
+
+// Current returns the current document as a MongORM instance. It should be called after
+// a successful call to Next. If there is no current document (e.g., before the first call
+// to Next or after reaching the end of the cursor), it returns nil.
+//
+// Example usage:
+//
+//	if mongormCursor.Next(ctx) {
+//	    current := mongormCursor.Current()
+//	    if current != nil {
+//	        // Use current
+//	    }
+//	}
+//	if err := mongormCursor.Err(); err != nil {
+//	    // Handle error
+//	}
+func (c *MongORMCursor[T]) Current() *MongORM[T] {
+	if c == nil || c.current == nil || c.m == nil {
+		return nil
 	}
 
 	clone := c.m.clone()
-	clone.schema = &u
-
-	return clone, nil
+	clone.schema = c.current
+	return clone
 }
 
 // All retrieves all remaining documents from the cursor and decodes them into a slice
@@ -79,15 +119,33 @@ func (c *MongORMCursor[T]) Next(ctx context.Context) (*MongORM[T], error) {
 //	    // Use the cursors
 //	}
 func (c *MongORMCursor[T]) All(ctx context.Context) ([]*MongORM[T], error) {
+	if c == nil || c.MongoCursor == nil {
+		if c != nil {
+			c.current = nil
+			c.err = configErrorf("cursor is nil")
+		}
+		return nil, configErrorf("cursor is nil")
+	}
+
+	if c.m == nil {
+		c.current = nil
+		c.err = configErrorf("cursor model is nil")
+		return nil, c.err
+	}
+
+	c.current = nil
+	c.err = nil
+
 	var results []T
 	if err := c.MongoCursor.All(ctx, &results); err != nil {
-		return nil, normalizeError(err)
+		c.err = normalizeError(err)
+		return nil, c.err
 	}
 
 	clones := make([]*MongORM[T], len(results))
-	for i, result := range results {
+	for i := range results {
 		clone := c.m.clone()
-		clone.schema = &result
+		clone.schema = &results[i]
 		clones[i] = clone
 	}
 
@@ -105,5 +163,16 @@ func (c *MongORMCursor[T]) All(ctx context.Context) ([]*MongORM[T], error) {
 //	    // Handle error
 //	}
 func (c *MongORMCursor[T]) Close(ctx context.Context) error {
+	if c == nil || c.MongoCursor == nil {
+		if c != nil {
+			c.current = nil
+			c.err = configErrorf("cursor is nil")
+		}
+		return configErrorf("cursor is nil")
+	}
+
+	c.current = nil
+	c.err = nil
+
 	return normalizeError(c.MongoCursor.Close(ctx))
 }
