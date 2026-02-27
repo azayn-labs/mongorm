@@ -9,6 +9,51 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+func resolveFieldBSONName(field any) string {
+	if field == nil {
+		return ""
+	}
+
+	if typedField, ok := field.(Field); ok && typedField != nil {
+		return strings.TrimSpace(typedField.BSONName())
+	}
+
+	v := reflect.ValueOf(field)
+	if !v.IsValid() {
+		return ""
+	}
+
+	for v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return ""
+		}
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		return ""
+	}
+
+	if v.Len() == 0 {
+		return ""
+	}
+
+	item := v.Index(0)
+	if item.IsValid() {
+		if item.CanAddr() {
+			if typedField, ok := item.Addr().Interface().(Field); ok && typedField != nil {
+				return strings.TrimSpace(typedField.BSONName())
+			}
+		}
+
+		if typedField, ok := item.Interface().(Field); ok && typedField != nil {
+			return strings.TrimSpace(typedField.BSONName())
+		}
+	}
+
+	return ""
+}
+
 // Set adds the specified fields and values to the update document for the current operation.
 // It takes a pointer to a struct of type T, which represents the fields to be updated.
 // The method iterates through the fields of the struct, checking for non-zero values and
@@ -107,12 +152,8 @@ func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 // SetData adds or overrides a single field/value in the current $set update document.
 // It accepts a schema Field, so nested fields are supported via field paths (for example:
 // `ToDoFields.User.Email` => `user.email`).
-func (m *MongORM[T]) SetData(field Field, value any) *MongORM[T] {
-	if field == nil {
-		return m
-	}
-
-	fieldName := strings.TrimSpace(field.BSONName())
+func (m *MongORM[T]) SetData(field any, value any) *MongORM[T] {
+	fieldName := resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -153,12 +194,8 @@ func (m *MongORM[T]) SetData(field Field, value any) *MongORM[T] {
 // UnsetData adds or overrides a single field in the current $unset update document.
 // It accepts a schema Field, so nested fields are supported via field paths (for example:
 // `ToDoFields.User.Email` => `user.email`).
-func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
-	if field == nil {
-		return m
-	}
-
-	fieldName := strings.TrimSpace(field.BSONName())
+func (m *MongORM[T]) UnsetData(field any) *MongORM[T] {
+	fieldName := resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -208,12 +245,12 @@ func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
 //
 //	orm.Where(ToDoFields.ID.Eq(id)).IncData(ToDoFields.Count, int64(2)).Save(ctx)
 //	orm.Where(ToDoFields.ID.Eq(id)).IncData(ToDoFields.User.Score, 1).Save(ctx)
-func (m *MongORM[T]) IncData(field Field, value any) *MongORM[T] {
-	if field == nil || value == nil {
+func (m *MongORM[T]) IncData(field any, value any) *MongORM[T] {
+	if value == nil {
 		return m
 	}
 
-	fieldName := strings.TrimSpace(field.BSONName())
+	fieldName := resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -257,7 +294,7 @@ func (m *MongORM[T]) IncData(field Field, value any) *MongORM[T] {
 //
 //	orm.Where(ToDoFields.ID.Eq(id)).DecData(ToDoFields.Count, 1).Save(ctx)
 //	// equivalent raw update: {"$inc": {"count": -1}}
-func (m *MongORM[T]) DecData(field Field, value int64) *MongORM[T] {
+func (m *MongORM[T]) DecData(field any, value int64) *MongORM[T] {
 	if value < 0 {
 		value = -value
 	}
@@ -267,12 +304,12 @@ func (m *MongORM[T]) DecData(field Field, value int64) *MongORM[T] {
 
 // PushData adds or overrides a single field/value in the current $push update document.
 // It accepts a schema Field, so nested fields are supported via field paths.
-func (m *MongORM[T]) PushData(field Field, value any) *MongORM[T] {
-	if field == nil || value == nil {
+func (m *MongORM[T]) PushData(field any, value any) *MongORM[T] {
+	if value == nil {
 		return m
 	}
 
-	fieldName := strings.TrimSpace(field.BSONName())
+	fieldName := resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -311,7 +348,7 @@ func (m *MongORM[T]) PushData(field Field, value any) *MongORM[T] {
 }
 
 // PushEachData appends multiple values using MongoDB's $push + $each syntax.
-func (m *MongORM[T]) PushEachData(field Field, values []any) *MongORM[T] {
+func (m *MongORM[T]) PushEachData(field any, values []any) *MongORM[T] {
 	if len(values) == 0 {
 		return m
 	}
@@ -321,12 +358,12 @@ func (m *MongORM[T]) PushEachData(field Field, values []any) *MongORM[T] {
 
 // AddToSetData adds or overrides a single field/value in the current $addToSet update document.
 // It accepts a schema Field, so nested fields are supported via field paths.
-func (m *MongORM[T]) AddToSetData(field Field, value any) *MongORM[T] {
-	if field == nil || value == nil {
+func (m *MongORM[T]) AddToSetData(field any, value any) *MongORM[T] {
+	if value == nil {
 		return m
 	}
 
-	fieldName := strings.TrimSpace(field.BSONName())
+	fieldName := resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -365,7 +402,7 @@ func (m *MongORM[T]) AddToSetData(field Field, value any) *MongORM[T] {
 }
 
 // AddToSetEachData appends multiple values uniquely using MongoDB's $addToSet + $each syntax.
-func (m *MongORM[T]) AddToSetEachData(field Field, values []any) *MongORM[T] {
+func (m *MongORM[T]) AddToSetEachData(field any, values []any) *MongORM[T] {
 	if len(values) == 0 {
 		return m
 	}
@@ -375,12 +412,12 @@ func (m *MongORM[T]) AddToSetEachData(field Field, values []any) *MongORM[T] {
 
 // PullData adds or overrides a single field/value in the current $pull update document.
 // It accepts a schema Field, so nested fields are supported via field paths.
-func (m *MongORM[T]) PullData(field Field, value any) *MongORM[T] {
-	if field == nil || value == nil {
+func (m *MongORM[T]) PullData(field any, value any) *MongORM[T] {
+	if value == nil {
 		return m
 	}
 
-	fieldName := strings.TrimSpace(field.BSONName())
+	fieldName := resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -420,16 +457,12 @@ func (m *MongORM[T]) PullData(field Field, value any) *MongORM[T] {
 
 // PopData adds or overrides a single field/value in the current $pop update document.
 // value must be either -1 (remove first) or 1 (remove last).
-func (m *MongORM[T]) PopData(field Field, value int) *MongORM[T] {
-	if field == nil {
-		return m
-	}
-
+func (m *MongORM[T]) PopData(field any, value int) *MongORM[T] {
 	if value != -1 && value != 1 {
 		return m
 	}
 
-	fieldName := strings.TrimSpace(field.BSONName())
+	fieldName := resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -468,12 +501,12 @@ func (m *MongORM[T]) PopData(field Field, value int) *MongORM[T] {
 }
 
 // PopFirstData removes the first element from an array field.
-func (m *MongORM[T]) PopFirstData(field Field) *MongORM[T] {
+func (m *MongORM[T]) PopFirstData(field any) *MongORM[T] {
 	return m.PopData(field, -1)
 }
 
 // PopLastData removes the last element from an array field.
-func (m *MongORM[T]) PopLastData(field Field) *MongORM[T] {
+func (m *MongORM[T]) PopLastData(field any) *MongORM[T] {
 	return m.PopData(field, 1)
 }
 

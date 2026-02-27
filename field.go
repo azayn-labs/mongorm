@@ -346,6 +346,34 @@ func setSchemaField(target reflect.Value, fieldObj Field) bool {
 	value := reflect.ValueOf(fieldObj)
 	targetType := target.Type()
 
+	if target.Kind() == reflect.Slice {
+		elemType := targetType.Elem()
+		elemValue, ok := coerceFieldValueForType(value, elemType)
+		if !ok {
+			return false
+		}
+
+		slice := reflect.MakeSlice(targetType, 1, 1)
+		slice.Index(0).Set(elemValue)
+		target.Set(slice)
+		return true
+	}
+
+	if target.Kind() == reflect.Array {
+		if target.Len() == 0 {
+			return false
+		}
+
+		elemType := targetType.Elem()
+		elemValue, ok := coerceFieldValueForType(value, elemType)
+		if !ok {
+			return false
+		}
+
+		target.Index(0).Set(elemValue)
+		return true
+	}
+
 	if value.Type().AssignableTo(targetType) {
 		target.Set(value)
 		return true
@@ -375,4 +403,35 @@ func setSchemaField(target reflect.Value, fieldObj Field) bool {
 	}
 
 	return false
+}
+
+func coerceFieldValueForType(value reflect.Value, targetType reflect.Type) (reflect.Value, bool) {
+	if value.Type().AssignableTo(targetType) {
+		return value, true
+	}
+
+	if value.Type().ConvertibleTo(targetType) {
+		return value.Convert(targetType), true
+	}
+
+	if value.Kind() == reflect.Pointer {
+		elem := value.Elem()
+		if elem.IsValid() {
+			if elem.Type().AssignableTo(targetType) {
+				return elem, true
+			}
+
+			if elem.Type().ConvertibleTo(targetType) {
+				return elem.Convert(targetType), true
+			}
+		}
+	}
+
+	if targetType.Kind() == reflect.Interface {
+		if targetType.NumMethod() == 0 || value.Type().Implements(targetType) {
+			return value, true
+		}
+	}
+
+	return reflect.Value{}, false
 }
