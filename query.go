@@ -129,8 +129,8 @@ func (m *MongORM[T]) SetData(field Field, value any) *MongORM[T] {
 		m.operations.update = bson.M{}
 	}
 
-	set, _ := m.operations.update["$set"].(bson.M)
-	if set == nil {
+	set, ok := m.operations.update["$set"].(bson.M)
+	if !ok || set == nil {
 		set = bson.M{}
 	}
 
@@ -171,8 +171,8 @@ func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
 		m.operations.update = bson.M{}
 	}
 
-	unset, _ := m.operations.update["$unset"].(bson.M)
-	if unset == nil {
+	unset, ok := m.operations.update["$unset"].(bson.M)
+	if !ok || unset == nil {
 		unset = bson.M{}
 	}
 
@@ -188,8 +188,8 @@ func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
 	if m.options.Timestamps {
 		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
 		if err == nil {
-			set, _ := m.operations.update["$set"].(bson.M)
-			if set == nil {
+			set, ok := m.operations.update["$set"].(bson.M)
+			if !ok || set == nil {
 				set = bson.M{}
 			}
 			set[updatedFieldName] = time.Now()
