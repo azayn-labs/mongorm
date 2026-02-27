@@ -30,6 +30,7 @@ func (m *MongORM[T]) clone() *MongORM[T] {
 		query:  bson.M{},
 		update: bson.M{},
 	}
+	p.modified = map[string]struct{}{}
 
 	return p
 }
@@ -45,5 +46,6 @@ func (m *MongORM[T]) reset() {
 		query:  bson.M{},
 		update: bson.M{},
 	}
+	m.modified = map[string]struct{}{}
 	m.schema = nil
 }

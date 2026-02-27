@@ -98,6 +98,7 @@ func (m *MongORM[T]) Save(
 
 	schema := any(m.schema)
 	hasExplicitUpdate := len(m.operations.update) > 0
+	m.clearModified()
 	m.applyTimestamps()
 	m.operations.fixUpdate()
 
@@ -107,12 +108,15 @@ func (m *MongORM[T]) Save(
 	}
 
 	if hasExplicitUpdate || len(m.operations.query) > 0 {
+		m.rebuildModifiedFromUpdate(m.operations.update)
+
 		optimisticLockEnabled := false
 		if id != nil {
 			optimisticLockEnabled, err = m.applyOptimisticLock(&filter, &m.operations.update)
 			if err != nil {
 				return err
 			}
+			m.rebuildModifiedFromUpdate(m.operations.update)
 		}
 
 		if len(m.operations.update) == 0 {
@@ -136,6 +140,8 @@ func (m *MongORM[T]) Save(
 			return err
 		}
 	} else {
+		m.rebuildModifiedFromSchema()
+
 		// Insert new document
 		if hook, ok := schema.(BeforeSaveHook[T]); ok {
 			if err := hook.BeforeSave(m, nil); err != nil {

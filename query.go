@@ -74,10 +74,15 @@ func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 	}
 
 	if len(set) > 0 {
+		for fieldName := range set {
+			m.markModified(fieldName)
+		}
+
 		if m.options.Timestamps {
 			_, createdFieldName, err := m.getFieldByTag(ModelTagTimestampCreatedAt)
 			if err == nil && set[createdFieldName] != nil {
 				delete(set, createdFieldName) // Never update createdAt
+				delete(m.modified, createdFieldName)
 			}
 		}
 
@@ -156,20 +161,27 @@ func (m *MongORM[T]) Unset(value *T) *MongORM[T] {
 	}
 
 	if len(unset) > 0 {
+		for fieldName := range unset {
+			m.markModified(fieldName)
+		}
+
 		if m.options.Timestamps {
 			_, createdFieldName, createdErr := m.getFieldByTag(ModelTagTimestampCreatedAt)
 			if createdErr == nil && unset[createdFieldName] != nil {
 				delete(unset, createdFieldName) // Never unset createdAt
+				delete(m.modified, createdFieldName)
 			}
 
 			_, updatedFieldName, updatedErr := m.getFieldByTag(ModelTagTimestampUpdatedAt)
 			if updatedErr == nil && unset[updatedFieldName] != nil {
 				delete(unset, updatedFieldName) // Never unset updatedAt
+				delete(m.modified, updatedFieldName)
 			}
 		}
 
 		if unset[primarykeyName] != nil {
 			delete(unset, primarykeyName) // Never unset primary key
+			delete(m.modified, primarykeyName)
 		}
 
 		if m.operations.update["$unset"] == nil {

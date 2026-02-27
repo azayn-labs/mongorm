@@ -95,6 +95,7 @@ func (m *MongORM[T]) insertOne(ctx context.Context) error {
 	}
 
 	schema := any(m.schema)
+	m.rebuildModifiedFromSchema()
 	if hook, ok := schema.(BeforeCreateHook[T]); ok {
 		if err := hook.BeforeCreate(m); err != nil {
 			return err
@@ -149,6 +150,7 @@ func (m *MongORM[T]) updateOne(
 	var doc T
 
 	schema := any(m.schema)
+	m.rebuildModifiedFromUpdate(*update)
 	if hook, ok := schema.(BeforeUpdateHook[T]); ok {
 		if err := hook.BeforeUpdate(m, filter, update); err != nil {
 			return err

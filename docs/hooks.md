@@ -19,6 +19,73 @@ MongORM provides a lifecycle hook system for every CRUD operation. Hooks are imp
 | `BeforeFinalizeHook[T]` | `BeforeFinalize(*MongORM[T]) error` | Before applying a fetched document to the schema |
 | `AfterFinalizeHook[T]` | `AfterFinalize(*MongORM[T]) error` | After applying a fetched document to the schema |
 
+## Change tracking inside hooks
+
+During `BeforeSave`, `BeforeUpdate`, and `BeforeCreate`, you can inspect changed fields:
+
+- `m.IsModified("field.path")`
+- `m.IsModifed("field.path")` (compatibility alias)
+- `m.ModifiedFields()`
+
+Nested paths are supported.
+
+```go
+func (u *User) BeforeUpdate(m *mongorm.MongORM[User], filter *bson.M, update *bson.M) error {
+    if m.IsModified("profile.provider") {
+        // do something when nested provider changed
+    }
+    return nil
+}
+```
+
+### Better end-to-end example
+
+```go
+type AuthProfile struct {
+    Provider *string  `bson:"provider,omitempty"`
+    Scopes   []string `bson:"scopes,omitempty"`
+}
+
+type User struct {
+    ID       *bson.ObjectID `bson:"_id,omitempty" mongorm:"primary"`
+    Email    *string        `bson:"email,omitempty"`
+    Password *string        `bson:"password,omitempty"`
+    Auth     *AuthProfile   `bson:"auth,omitempty"`
+}
+
+func (u *User) BeforeSave(m *mongorm.MongORM[User], filter *bson.M) error {
+    // Works for both create (filter=nil) and update (filter!=nil)
+    if m.IsModified("password") {
+        // hash password, rotate sessions, etc.
+    }
+
+    if m.IsModified("auth.provider") || m.IsModified("auth.scopes") {
+        // re-sync OAuth metadata
+    }
+
+    // For arrays/slices of struct, check parent or deep path
+    if m.IsModified("devices") || m.IsModified("devices.token") {
+        // revoke old device tokens
+    }
+
+    // Optional: inspect all changed paths
+    changed := m.ModifiedFields()
+    _ = changed
+
+    return nil
+}
+
+func (u *User) BeforeUpdate(m *mongorm.MongORM[User], filter *bson.M, update *bson.M) error {
+    if m.IsModified("email") {
+        // verify new email / update search index
+    }
+
+    return nil
+}
+```
+
+With this model, changes like `auth.provider` match both `m.IsModified("auth.provider")` and `m.IsModified("auth")`.
+
 ## Implementation
 
 Implement any combination of hooks by adding the corresponding methods to your model struct. You only need to implement the hooks you care about.

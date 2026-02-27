@@ -26,6 +26,7 @@ type MongORM[T any] struct {
 	options    *MongORMOptions
 	info       *MongORMInfo
 	operations *MongORMOperations
+	modified   map[string]struct{}
 	initErr    error
 }
 

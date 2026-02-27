@@ -55,6 +55,7 @@ func FromOptions[T any](schema *T, options *MongORMOptions) *MongORM[T] {
 			query:  bson.M{},
 			update: bson.M{},
 		},
+		modified: map[string]struct{}{},
 	}
 
 	m.options = &MongORMOptions{}
