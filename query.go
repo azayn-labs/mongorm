@@ -3,6 +3,7 @@ package mongorm
 import (
 	"maps"
 	"reflect"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -97,6 +98,116 @@ func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 				maps.Copy(currentSet, set)
 				m.operations.update["$set"] = currentSet
 			}
+		}
+	}
+
+	return m
+}
+
+// SetData adds or overrides a single field/value in the current $set update document.
+// It accepts a schema Field, so nested fields are supported via field paths (for example:
+// `ToDoFields.User.Email` => `user.email`).
+func (m *MongORM[T]) SetData(field Field, value any) *MongORM[T] {
+	if field == nil {
+		return m
+	}
+
+	fieldName := strings.TrimSpace(field.BSONName())
+	if fieldName == "" {
+		return m
+	}
+
+	if m.operations.update == nil {
+		m.operations.update = bson.M{}
+	}
+
+	set, _ := m.operations.update["$set"].(bson.M)
+	if set == nil {
+		set = bson.M{}
+	}
+
+	set[fieldName] = value
+	m.markModified(fieldName)
+
+	if m.options.Timestamps {
+		_, createdFieldName, err := m.getFieldByTag(ModelTagTimestampCreatedAt)
+		if err == nil && fieldName == createdFieldName {
+			delete(set, createdFieldName)
+			delete(m.modified, createdFieldName)
+		}
+
+		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+		if err == nil {
+			set[updatedFieldName] = time.Now()
+			m.markModified(updatedFieldName)
+		}
+	}
+
+	m.operations.update["$set"] = set
+
+	return m
+}
+
+// UnsetData adds or overrides a single field in the current $unset update document.
+// It accepts a schema Field, so nested fields are supported via field paths (for example:
+// `ToDoFields.User.Email` => `user.email`).
+func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
+	if field == nil {
+		return m
+	}
+
+	fieldName := strings.TrimSpace(field.BSONName())
+	if fieldName == "" {
+		return m
+	}
+
+	if m.operations.update == nil {
+		m.operations.update = bson.M{}
+	}
+
+	unset, _ := m.operations.update["$unset"].(bson.M)
+	if unset == nil {
+		unset = bson.M{}
+	}
+
+	unset[fieldName] = 1
+	m.markModified(fieldName)
+
+	if m.options.Timestamps {
+		_, createdFieldName, err := m.getFieldByTag(ModelTagTimestampCreatedAt)
+		if err == nil && fieldName == createdFieldName {
+			delete(unset, createdFieldName)
+			delete(m.modified, createdFieldName)
+		}
+
+		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+		if err == nil && fieldName == updatedFieldName {
+			delete(unset, updatedFieldName)
+			delete(m.modified, updatedFieldName)
+		}
+	}
+
+	if _, primaryFieldName, err := m.getFieldByTag(ModelTagPrimary); err == nil && fieldName == primaryFieldName {
+		delete(unset, primaryFieldName)
+		delete(m.modified, primaryFieldName)
+	}
+
+	if len(unset) > 0 {
+		m.operations.update["$unset"] = unset
+	} else {
+		delete(m.operations.update, "$unset")
+	}
+
+	if m.options.Timestamps {
+		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+		if err == nil {
+			set, _ := m.operations.update["$set"].(bson.M)
+			if set == nil {
+				set = bson.M{}
+			}
+			set[updatedFieldName] = time.Now()
+			m.markModified(updatedFieldName)
+			m.operations.update["$set"] = set
 		}
 	}
 

@@ -73,6 +73,17 @@ update := &ToDo{Text: mongorm.String("New text")}
 orm.Set(update)
 ```
 
+## Set a Single Field by Schema Field
+
+Use `SetData(field, value)` when you want to update one field directly from your generated schema fields.
+
+```go
+orm.SetData(ToDoFields.Text, "Updated task text")
+orm.SetData(ToDoFields.User.Email, "john@example.com") // nested path
+```
+
+This is especially useful for dynamic updates or deep nested fields where building a partial struct is cumbersome.
+
 ## Unset Fields
 
 Use `Unset()` to remove fields from the document (MongoDB `$unset`). Timestamp fields and the primary key are always protected from being unset.
@@ -80,6 +91,13 @@ Use `Unset()` to remove fields from the document (MongoDB `$unset`). Timestamp f
 ```go
 update := &ToDo{Text: mongorm.String("placeholder")}
 orm.Unset(update) // removes the "text" field from the document
+```
+
+You can also unset a single field directly from schema fields:
+
+```go
+orm.UnsetData(ToDoFields.Text)
+orm.UnsetData(ToDoFields.User.Email) // nested path
 ```
 
 ## Empty Update Guard

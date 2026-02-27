@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/azayn-labs/mongorm/primitives"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -21,6 +22,17 @@ type modifiedModel struct {
 	Profile *modifiedProfile     `bson:"profile,omitempty"`
 	Items   *[]modifiedArrayItem `bson:"items,omitempty"`
 }
+
+type modifiedProfileSchema struct {
+	Provider *primitives.StringField
+}
+
+type modifiedModelSchema struct {
+	Email   *primitives.StringField
+	Profile *modifiedProfileSchema
+}
+
+var modifiedFields = FieldsOf[modifiedModel, modifiedModelSchema]()
 
 func newModifiedTrackingModel() *MongORM[modifiedModel] {
 	return &MongORM[modifiedModel]{
@@ -112,5 +124,85 @@ func TestModifiedFieldsSortedOutput(t *testing.T) {
 
 	if !reflect.DeepEqual(m.ModifiedFields(), []string{"a", "z"}) {
 		t.Fatal("expected sorted modified fields")
+	}
+}
+
+func TestSetDataTracksDirectField(t *testing.T) {
+	m := newModifiedTrackingModel()
+	m.SetData(modifiedFields.Email, "john@example.com")
+
+	set, ok := m.operations.update["$set"].(bson.M)
+	if !ok {
+		t.Fatal("expected $set update document")
+	}
+
+	if !reflect.DeepEqual(set, bson.M{"email": "john@example.com"}) {
+		t.Fatalf("unexpected $set payload: %#v", set)
+	}
+
+	if !m.IsModified("email") {
+		t.Fatal("expected email to be marked as modified")
+	}
+}
+
+func TestSetDataTracksNestedField(t *testing.T) {
+	m := newModifiedTrackingModel()
+	m.SetData(modifiedFields.Profile.Provider, "google")
+
+	set, ok := m.operations.update["$set"].(bson.M)
+	if !ok {
+		t.Fatal("expected $set update document")
+	}
+
+	if !reflect.DeepEqual(set, bson.M{"profile.provider": "google"}) {
+		t.Fatalf("unexpected $set payload: %#v", set)
+	}
+
+	if !m.IsModified("profile.provider") {
+		t.Fatal("expected profile.provider to be marked as modified")
+	}
+
+	if !m.IsModified("profile") {
+		t.Fatal("expected parent profile to be treated as modified")
+	}
+}
+
+func TestUnsetDataTracksDirectField(t *testing.T) {
+	m := newModifiedTrackingModel()
+	m.UnsetData(modifiedFields.Email)
+
+	unset, ok := m.operations.update["$unset"].(bson.M)
+	if !ok {
+		t.Fatal("expected $unset update document")
+	}
+
+	if !reflect.DeepEqual(unset, bson.M{"email": 1}) {
+		t.Fatalf("unexpected $unset payload: %#v", unset)
+	}
+
+	if !m.IsModified("email") {
+		t.Fatal("expected email to be marked as modified")
+	}
+}
+
+func TestUnsetDataTracksNestedField(t *testing.T) {
+	m := newModifiedTrackingModel()
+	m.UnsetData(modifiedFields.Profile.Provider)
+
+	unset, ok := m.operations.update["$unset"].(bson.M)
+	if !ok {
+		t.Fatal("expected $unset update document")
+	}
+
+	if !reflect.DeepEqual(unset, bson.M{"profile.provider": 1}) {
+		t.Fatalf("unexpected $unset payload: %#v", unset)
+	}
+
+	if !m.IsModified("profile.provider") {
+		t.Fatal("expected profile.provider to be marked as modified")
+	}
+
+	if !m.IsModified("profile") {
+		t.Fatal("expected parent profile to be treated as modified")
 	}
 }
