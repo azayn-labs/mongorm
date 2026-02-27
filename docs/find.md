@@ -93,6 +93,44 @@ orm.Where(ToDoFields.Text.Reg("buy")).
     Where(ToDoFields.CreatedAt.Gte(cutoff))
 ```
 
+## Combining AND with OR
+
+Yes — this is supported. Use `Where()` for AND clauses and `OrWhere()` / `OrWhereBy()` for OR clauses:
+
+```go
+model := mongorm.New(&TaskRunner{})
+model.
+    Where(TaskRunnerFields.Status.Eq(models.TaskRunnerStatusPending)).
+    Where(TaskRunnerFields.RunAt.Lte(now)).
+    OrWhere(TaskRunnerFields.LockedUntil.Exists(false)).
+    OrWhere(TaskRunnerFields.LockedUntil.Lte(now))
+```
+
+This yields the same logical shape as:
+
+```go
+bson.M{
+    "status": models.TaskRunnerStatusPending,
+    "runAt":  bson.M{"$lte": now},
+    "$or": []bson.M{
+        {"lockedUntil": bson.M{"$exists": false}},
+        {"lockedUntil": bson.M{"$lte": now}},
+    },
+}
+```
+
+If you already have a fully composed raw filter, you can still pass it directly with `Where(rawFilter)`.
+
+You can also avoid raw BSON names for grouped OR logic:
+
+```go
+model.
+    Where(TaskRunnerFields.Status.Eq(models.TaskRunnerStatusPending)).
+    Where(TaskRunnerFields.RunAt.Lte(now)).
+    OrWhereAnd(TaskRunnerFields.LockedUntil.NotExists()).
+    OrWhereAnd(TaskRunnerFields.LockedUntil.Lte(now))
+```
+
 ## Find() vs First()
 
 `Find()` is an alias for `First()`. Both retrieve one document and populate the schema pointer.

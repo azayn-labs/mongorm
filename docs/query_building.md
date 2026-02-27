@@ -44,6 +44,79 @@ orm.WhereBy(ToDoFields.Text, "Buy groceries")
 // equivalent to: orm.Where(bson.M{"text": "Buy groceries"})
 ```
 
+## OrWhere()
+
+`OrWhere()` adds a filter expression to a shared MongoDB `$or` group.
+
+```go
+// Signature
+func (m *MongORM[T]) OrWhere(expr bson.M) *MongORM[T]
+```
+
+```go
+orm.
+    OrWhere(ToDoFields.Text.Eq("Buy groceries")).
+    OrWhere(ToDoFields.Text.Eq("Pay bills"))
+```
+
+## OrWhereBy()
+
+`OrWhereBy()` is the field/value variant of `OrWhere()`.
+
+```go
+// Signature
+func (m *MongORM[T]) OrWhereBy(field Field, value any) *MongORM[T]
+```
+
+```go
+orm.
+    OrWhereBy(ToDoFields.Text, "Buy groceries").
+    OrWhereBy(ToDoFields.Text, "Pay bills")
+```
+
+## OrWhereAnd()
+
+`OrWhereAnd()` lets you create one `$or` branch from multiple expressions combined with `$and`.
+This avoids writing raw BSON field names for grouped OR logic.
+
+```go
+// Signature
+func (m *MongORM[T]) OrWhereAnd(exprs ...bson.M) *MongORM[T]
+```
+
+```go
+orm.
+    Where(ToDoFields.Status.Eq(models.TaskRunnerStatusPending)).
+    Where(ToDoFields.RunAt.Lte(now)).
+    OrWhereAnd(ToDoFields.LockedUntil.NotExists()).
+    OrWhereAnd(ToDoFields.LockedUntil.Lte(now))
+```
+
+For multi-condition OR branches:
+
+```go
+orm.
+    OrWhereAnd(ToDoFields.Done.Eq(true), ToDoFields.Count.Gte(10)).
+    OrWhereAnd(ToDoFields.Done.Eq(false), ToDoFields.Count.Lte(3))
+```
+
+## Combining Where() and OrWhere()
+
+`Where()` clauses are grouped under `$and`, and `OrWhere()` clauses are grouped under `$or`.
+When both are present, MongoDB applies both groups together (logical AND between groups).
+
+```go
+orm.
+    Where(ToDoFields.Done.Eq(true)).
+    OrWhere(ToDoFields.Text.Eq("Buy groceries")).
+    OrWhere(ToDoFields.Text.Eq("Pay bills"))
+// equivalent filter shape:
+// {
+//   "$and": [{"done": true}],
+//   "$or":  [{"text": "Buy groceries"}, {"text": "Pay bills"}]
+// }
+```
+
 ## Sort()
 
 `Sort()` sets sort order for find operations.

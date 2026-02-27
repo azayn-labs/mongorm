@@ -50,6 +50,14 @@ func TestMain(t *testing.T) {
 		FindLibraryTodoByTextWhereBy(t, *toDo.Text)
 	})
 
+	t.Run("Find TODO with OrWhere", func(t *testing.T) {
+		FindLibraryTodoByOrWhere(t)
+	})
+
+	t.Run("Find TODO with OrWhereAnd", func(t *testing.T) {
+		FindLibraryTodoByOrWhereAnd(t)
+	})
+
 	t.Run("Update TODO by ID", func(t *testing.T) {
 		update := &ToDo{
 			Text:  mongorm.String("This is an updated functional library test todo"),

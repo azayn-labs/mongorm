@@ -17,7 +17,7 @@ GitHub Project: [MongORM](https://github.com/azayn-labs/mongorm)
 ## Features
 
 - Type-safe model and schema definitions using Go generics
-- Fluent API for building queries with `Where()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, keyset pagination helpers, `Set()`, and `Unset()`
+- Fluent API for building queries with `Where()`, `OrWhere()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, keyset pagination helpers, `Set()`, and `Unset()`
 - Typed projection decoding for DTO targets via `FindOneAs[T, R]()` and `FindAllAs[T, R]()`
 - Full CRUD support: create, find, update (single and multi), and delete (single and multi)
 - Bulk write support with typed builder helpers via `BulkWrite()`, `BulkWriteInTransaction()`, and `NewBulkWriteBuilder[T]()`
@@ -102,6 +102,16 @@ func main() {
         Set(&ToDo{Text: mongorm.String("Buy organic groceries")}).
         Save(ctx)
 
+    // OR filtering
+    cursor, err := mongorm.New(&ToDo{}).
+        OrWhere(ToDoFields.Text.Eq("Buy groceries")).
+        OrWhereBy(ToDoFields.Text, "Buy organic groceries").
+        FindAll(ctx)
+    if err != nil {
+        panic(err)
+    }
+    defer cursor.Close(ctx)
+
     // Delete
     mongorm.New(&ToDo{}).Where(ToDoFields.ID.Eq(*todo.ID)).Delete(ctx)
 }
@@ -123,7 +133,7 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 | [Indexes](./docs/indexes.md) | Field-based index builders and geo index setup |
 | [Aggregation](./docs/aggregate.md) | Aggregation pipelines with fluent builder and typed decoding |
 | [Cursors](./docs/cursors.md) | Iterating with `FindAll()` |
-| [Query Building](./docs/query_building.md) | `Where()`, find modifiers, pagination helpers, `Set()`, `Unset()` |
+| [Query Building](./docs/query_building.md) | `Where()`, `OrWhere()`, find modifiers, pagination helpers, `Set()`, `Unset()` |
 | [Primitives](./docs/primitives.md) | Type-safe field query methods |
 | [Hooks](./docs/hooks.md) | Lifecycle hooks |
 | [Transactions](./docs/transactions.md) | Running operations in MongoDB transactions |
@@ -137,7 +147,7 @@ Quick map of commonly used entry points and where they are documented:
 
 - Core initialization: `New()`, `FromOptions()`, `NewClient()` → [Configuration](./docs/configuration.md)
 - CRUD execution: `Save()`, `Update()`, `SaveMulti()`, `Delete()`, `DeleteMulti()`, `First()` / `Find()` → [Creating Documents](./docs/create.md), [Finding Documents](./docs/find.md), [Updating Documents](./docs/update.md), [Deleting Documents](./docs/delete.md)
-- Query builders: `Where()`, `WhereBy()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, `After()` / `Before()`, `PaginateAfter()` / `PaginateBefore()`, `Set()`, `Unset()` → [Query Building](./docs/query_building.md)
+- Query builders: `Where()`, `WhereBy()`, `OrWhere()`, `OrWhereBy()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, `After()` / `Before()`, `PaginateAfter()` / `PaginateBefore()`, `Set()`, `Unset()` → [Query Building](./docs/query_building.md)
 - Typed read helpers: `FindOneAs[T, R]()`, `FindAllAs[T, R]()` → [Finding Documents](./docs/find.md)
 - Distinct and count: `Count()`, `Distinct()`, `DistinctFieldAs[T, V]()`, `DistinctStrings()`, `DistinctInt64()`, `DistinctBool()`, `DistinctFloat64()`, `DistinctObjectIDs()`, `DistinctTimes()` → [Finding Documents](./docs/find.md)
 - Aggregation: `Aggregate()`, `AggregateRaw()`, `AggregateAs[T, R]()`, `AggregatePipelineAs[T, R]()` plus stage builders → [Aggregation](./docs/aggregate.md)

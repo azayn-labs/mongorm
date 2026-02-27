@@ -4,6 +4,26 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+func (m *MongORM[T]) appendQueryExpression(operator string, expr bson.M) *MongORM[T] {
+	if expr == nil {
+		return m
+	}
+
+	if m.operations.query == nil {
+		m.operations.query = bson.M{}
+	}
+
+	if m.operations.query[operator] == nil {
+		m.operations.query[operator] = bson.A{}
+	}
+
+	if clauses, ok := m.operations.query[operator].(bson.A); ok {
+		m.operations.query[operator] = append(clauses, expr)
+	}
+
+	return m
+}
+
 // Where adds a query filter to the MongORM instance. It takes a bson.M expression as an
 // argument and appends it to the existing query filters using the $and operator.
 // This allows you to chain multiple query filters together using the $and operator.
@@ -14,22 +34,7 @@ import (
 //	// OR
 //	orm.Where(fielType.Age.Gt(30)).Where(fieldType.Name.Eq("John"))
 func (m *MongORM[T]) Where(expr bson.M) *MongORM[T] {
-	if m.operations.query == nil {
-		m.operations.query = bson.M{}
-	}
-
-	if m.operations.query["$and"] == nil {
-		m.operations.query["$and"] = bson.A{}
-	}
-
-	if and, ok := m.operations.query["$and"].(bson.A); ok {
-		m.operations.query["$and"] = append(
-			and,
-			expr,
-		)
-	}
-
-	return m
+	return m.appendQueryExpression("$and", expr)
 }
 
 // Where adds a query filter for a specific field and value to the MongORM instance.
@@ -41,23 +46,67 @@ func (m *MongORM[T]) Where(expr bson.M) *MongORM[T] {
 //
 //	orm.WhereBy(fieldType.Age, 30).WhereBy(fieldType.Name, "John")
 func (m *MongORM[T]) WhereBy(field Field, value any) *MongORM[T] {
+	if field == nil {
+		return m
+	}
+
 	name := field.BSONName()
-	if m.operations.query == nil {
-		m.operations.query = bson.M{}
+	return m.Where(bson.M{name: value})
+}
+
+// OrWhere adds a query filter to the MongORM instance under the $or operator.
+// Multiple OrWhere calls are grouped together in a single $or array.
+//
+// Example usage:
+//
+//	orm.OrWhere(fieldType.Text.Eq("A")).OrWhere(fieldType.Text.Eq("B"))
+func (m *MongORM[T]) OrWhere(expr bson.M) *MongORM[T] {
+	return m.appendQueryExpression("$or", expr)
+}
+
+// OrWhereBy adds a field/value query filter to the MongORM instance under the $or operator.
+//
+// Example usage:
+//
+//	orm.OrWhereBy(fieldType.Text, "A").OrWhereBy(fieldType.Text, "B")
+func (m *MongORM[T]) OrWhereBy(field Field, value any) *MongORM[T] {
+	if field == nil {
+		return m
 	}
 
-	if m.operations.query["$and"] == nil {
-		m.operations.query["$and"] = bson.A{}
+	name := field.BSONName()
+	return m.OrWhere(bson.M{name: value})
+}
+
+// OrWhereAnd adds a grouped AND expression as one branch of the $or operator.
+// This is useful for building queries like: (...existing filters...) AND ((A AND B) OR (C AND D)).
+//
+// Example usage:
+//
+//	orm.
+//		OrWhereAnd(fieldType.Status.Eq("pending"), fieldType.RunAt.Lte(now)).
+//		OrWhereAnd(fieldType.LockedUntil.NotExists(), fieldType.LockedUntil.Lte(now))
+func (m *MongORM[T]) OrWhereAnd(exprs ...bson.M) *MongORM[T] {
+	andClauses := bson.A{}
+	for _, expr := range exprs {
+		if expr == nil {
+			continue
+		}
+		andClauses = append(andClauses, expr)
 	}
 
-	if and, ok := m.operations.query["$and"].(bson.A); ok {
-		m.operations.query["$and"] = append(
-			and,
-			bson.M{name: value},
-		)
+	if len(andClauses) == 0 {
+		return m
 	}
 
-	return m
+	if len(andClauses) == 1 {
+		if expr, ok := andClauses[0].(bson.M); ok {
+			return m.OrWhere(expr)
+		}
+		return m
+	}
+
+	return m.OrWhere(bson.M{"$and": andClauses})
 }
 
 // Sort sets the sort order for find operations. It accepts the same values supported by

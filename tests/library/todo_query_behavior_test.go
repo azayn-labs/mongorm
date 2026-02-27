@@ -31,6 +31,96 @@ func FindLibraryTodoByTextWhereBy(t *testing.T, text string) {
 	}
 }
 
+func FindLibraryTodoByOrWhere(t *testing.T) {
+	prefix := fmt.Sprintf("or-where-%d", time.Now().UnixNano())
+
+	a := &ToDo{Text: mongorm.String(prefix + "-a"), Done: mongorm.Bool(false), Count: 1}
+	b := &ToDo{Text: mongorm.String(prefix + "-b"), Done: mongorm.Bool(true), Count: 2}
+	c := &ToDo{Text: mongorm.String(prefix + "-c"), Done: mongorm.Bool(true), Count: 3}
+
+	CreateLibraryTodo(t, a)
+	CreateLibraryTodo(t, b)
+	CreateLibraryTodo(t, c)
+	defer DeleteLibraryTodoByID(t, a.ID)
+	defer DeleteLibraryTodoByID(t, b.ID)
+	defer DeleteLibraryTodoByID(t, c.ID)
+
+	model := mongorm.New(&ToDo{})
+	model.
+		Where(ToDoFields.Done.Eq(true)).
+		OrWhereBy(ToDoFields.Text, prefix+"-a").
+		OrWhere(ToDoFields.Text.Eq(prefix + "-b")).
+		SortAsc(ToDoFields.Count)
+
+	cursor, err := model.FindAll(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cursor.Close(t.Context())
+
+	items, err := cursor.All(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(items) != 1 {
+		t.Fatalf("expected exactly one result from Where+OrWhere query, got %d", len(items))
+	}
+
+	if items[0] == nil || items[0].Document() == nil || items[0].Document().Text == nil {
+		t.Fatal("expected one decoded document from OrWhere query")
+	}
+
+	if *items[0].Document().Text != prefix+"-b" {
+		t.Fatalf("expected matched text %q, got %q", prefix+"-b", *items[0].Document().Text)
+	}
+}
+
+func FindLibraryTodoByOrWhereAnd(t *testing.T) {
+	prefix := fmt.Sprintf("or-where-and-%d", time.Now().UnixNano())
+
+	a := &ToDo{Text: mongorm.String(prefix + "-a"), Done: mongorm.Bool(false), Count: 1}
+	b := &ToDo{Text: mongorm.String(prefix + "-b"), Done: mongorm.Bool(true), Count: 2}
+	c := &ToDo{Text: mongorm.String(prefix + "-c"), Done: mongorm.Bool(true), Count: 9}
+
+	CreateLibraryTodo(t, a)
+	CreateLibraryTodo(t, b)
+	CreateLibraryTodo(t, c)
+	defer DeleteLibraryTodoByID(t, a.ID)
+	defer DeleteLibraryTodoByID(t, b.ID)
+	defer DeleteLibraryTodoByID(t, c.ID)
+
+	model := mongorm.New(&ToDo{})
+	model.
+		Where(ToDoFields.Text.Reg("^"+prefix)).
+		OrWhereAnd(ToDoFields.Done.Eq(false), ToDoFields.Count.Eq(int64(1))).
+		OrWhereAnd(ToDoFields.Done.Eq(true), ToDoFields.Count.Eq(int64(2))).
+		SortAsc(ToDoFields.Count)
+
+	cursor, err := model.FindAll(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cursor.Close(t.Context())
+
+	items, err := cursor.All(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(items) != 2 {
+		t.Fatalf("expected 2 results from OrWhereAnd query, got %d", len(items))
+	}
+
+	if items[0] == nil || items[1] == nil || items[0].Document() == nil || items[1].Document() == nil {
+		t.Fatal("expected decoded documents from OrWhereAnd query")
+	}
+
+	if items[0].Document().Count != 1 || items[1].Document().Count != 2 {
+		t.Fatalf("expected sorted counts [1, 2], got [%d, %d]", items[0].Document().Count, items[1].Document().Count)
+	}
+}
+
 func UnsetLibraryTodoByID(t *testing.T, id *bson.ObjectID) {
 	logger(t, fmt.Sprintf("[TODO] Unsetting fields by id %s\n", id.Hex()))
 
