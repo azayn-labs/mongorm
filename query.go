@@ -117,6 +117,14 @@ func (m *MongORM[T]) SetData(field Field, value any) *MongORM[T] {
 		return m
 	}
 
+	if m.pathHasAnyModelTag(fieldName, ModelTagPrimary, ModelTagReadonly) {
+		return m
+	}
+
+	if m.pathHasAnyModelTag(fieldName, ModelTagTimestampCreatedAt) {
+		return m
+	}
+
 	if m.operations.update == nil {
 		m.operations.update = bson.M{}
 	}
@@ -130,12 +138,6 @@ func (m *MongORM[T]) SetData(field Field, value any) *MongORM[T] {
 	m.markModified(fieldName)
 
 	if m.options.Timestamps {
-		_, createdFieldName, err := m.getFieldByTag(ModelTagTimestampCreatedAt)
-		if err == nil && fieldName == createdFieldName {
-			delete(set, createdFieldName)
-			delete(m.modified, createdFieldName)
-		}
-
 		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
 		if err == nil {
 			set[updatedFieldName] = time.Now()
@@ -161,6 +163,10 @@ func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
 		return m
 	}
 
+	if m.pathHasAnyModelTag(fieldName, ModelTagPrimary, ModelTagReadonly, ModelTagTimestampCreatedAt, ModelTagTimestampUpdatedAt) {
+		return m
+	}
+
 	if m.operations.update == nil {
 		m.operations.update = bson.M{}
 	}
@@ -172,25 +178,6 @@ func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
 
 	unset[fieldName] = 1
 	m.markModified(fieldName)
-
-	if m.options.Timestamps {
-		_, createdFieldName, err := m.getFieldByTag(ModelTagTimestampCreatedAt)
-		if err == nil && fieldName == createdFieldName {
-			delete(unset, createdFieldName)
-			delete(m.modified, createdFieldName)
-		}
-
-		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
-		if err == nil && fieldName == updatedFieldName {
-			delete(unset, updatedFieldName)
-			delete(m.modified, updatedFieldName)
-		}
-	}
-
-	if _, primaryFieldName, err := m.getFieldByTag(ModelTagPrimary); err == nil && fieldName == primaryFieldName {
-		delete(unset, primaryFieldName)
-		delete(m.modified, primaryFieldName)
-	}
 
 	if len(unset) > 0 {
 		m.operations.update["$unset"] = unset
@@ -212,6 +199,38 @@ func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
 	}
 
 	return m
+}
+
+func (m *MongORM[T]) pathHasAnyModelTag(path string, tags ...ModelTags) bool {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return false
+	}
+
+	typeOfModel := reflect.TypeOf((*T)(nil)).Elem()
+
+	for i := 0; i < typeOfModel.NumField(); i++ {
+		field := typeOfModel.Field(i)
+
+		hasAny := false
+		for _, tag := range tags {
+			if doesModelIncludeAnyModelFlags(field.Tag, string(tag)) {
+				hasAny = true
+				break
+			}
+		}
+
+		if !hasAny {
+			continue
+		}
+
+		fieldName := parseBSONName(field.Tag.Get("bson"), field.Name)
+		if fieldName == path || strings.HasPrefix(path, fieldName+".") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Save performs an upsert operation, updating an existing document if it exists or inserting

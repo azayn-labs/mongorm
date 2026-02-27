@@ -84,6 +84,28 @@ orm.SetData(ToDoFields.User.Email, "john@example.com") // nested path
 
 This is especially useful for dynamic updates or deep nested fields where building a partial struct is cumbersome.
 
+## Strict field-only workflow (no BSON field keys)
+
+Use field-based helpers end-to-end:
+
+```go
+orm.
+    WhereBy(ToDoFields.ID, targetID).
+    SortDesc(ToDoFields.CreatedAt).
+    ProjectionInclude(ToDoFields.ID, ToDoFields.Text)
+
+builder := mongorm.NewBulkWriteBuilder[ToDo]().
+    UpdateOneBy(
+        ToDoFields.ID,
+        targetID,
+        mongorm.SetUpdateFromPairs(
+            mongorm.FieldValuePair{Field: ToDoFields.Text, Value: "updated"},
+            mongorm.FieldValuePair{Field: ToDoFields.User.Email, Value: "john@example.com"},
+        ),
+        false,
+    )
+```
+
 ## Unset Fields
 
 Use `Unset()` to remove fields from the document (MongoDB `$unset`). Timestamp fields and the primary key are always protected from being unset.

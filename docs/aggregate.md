@@ -107,6 +107,21 @@ groups, err := mongorm.AggregatePipelineAs[ToDo, DoneSummary](orm, ctx)
 if err != nil {
     panic(err)
 }
+
+```
+
+## Strict field-only helpers
+
+Use field-based helpers to avoid raw BSON field keys for common aggregate paths:
+
+```go
+orm.
+    MatchBy(ToDoFields.Done, false).
+    SortByStage(ToDoFields.Count, -1).
+    UnwindByStage(ToDoFields.Tags)
+
+// lookup using schema fields for local/foreign keys
+orm.LookupByStage("users", ToDoFields.User.ID, UserFields.ID, mongorm.Alias("user"))
 ```
 
 Facet aliases can be centralized too:

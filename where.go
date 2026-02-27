@@ -67,6 +67,27 @@ func (m *MongORM[T]) Sort(value any) *MongORM[T] {
 	return m
 }
 
+// SortBy sets sort using a schema field and direction.
+// Use 1 for ascending and -1 for descending.
+func (m *MongORM[T]) SortBy(field Field, direction int) *MongORM[T] {
+	if field == nil {
+		return m
+	}
+
+	m.operations.sort = bson.D{{Key: field.BSONName(), Value: direction}}
+	return m
+}
+
+// SortAsc sets ascending sort using a schema field.
+func (m *MongORM[T]) SortAsc(field Field) *MongORM[T] {
+	return m.SortBy(field, 1)
+}
+
+// SortDesc sets descending sort using a schema field.
+func (m *MongORM[T]) SortDesc(field Field) *MongORM[T] {
+	return m.SortBy(field, -1)
+}
+
 // Limit sets the maximum number of documents returned by find operations.
 // For First()/Find(), this value is ignored because the operation always returns one document.
 func (m *MongORM[T]) Limit(value int64) *MongORM[T] {
@@ -84,6 +105,44 @@ func (m *MongORM[T]) Skip(value int64) *MongORM[T] {
 // Example: bson.M{"text": 1, "count": 1}
 func (m *MongORM[T]) Projection(value any) *MongORM[T] {
 	m.operations.projection = value
+	return m
+}
+
+// ProjectionInclude sets projection to include only the given schema fields.
+func (m *MongORM[T]) ProjectionInclude(fields ...Field) *MongORM[T] {
+	projection := bson.M{}
+
+	for _, field := range fields {
+		if field == nil {
+			continue
+		}
+		projection[field.BSONName()] = 1
+	}
+
+	if len(projection) == 0 {
+		return m
+	}
+
+	m.operations.projection = projection
+	return m
+}
+
+// ProjectionExclude sets projection to exclude the given schema fields.
+func (m *MongORM[T]) ProjectionExclude(fields ...Field) *MongORM[T] {
+	projection := bson.M{}
+
+	for _, field := range fields {
+		if field == nil {
+			continue
+		}
+		projection[field.BSONName()] = 0
+	}
+
+	if len(projection) == 0 {
+		return m
+	}
+
+	m.operations.projection = projection
 	return m
 }
 

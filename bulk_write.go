@@ -60,6 +60,55 @@ type BulkWriteBuilder[T any] struct {
 	models []mongo.WriteModel
 }
 
+// FieldValuePair is a field/value helper for field-only update builders.
+type FieldValuePair struct {
+	Field Field
+	Value any
+}
+
+// FilterBy creates an equality filter using a schema field.
+func FilterBy(field Field, value any) bson.M {
+	if field == nil {
+		return bson.M{}
+	}
+
+	return bson.M{field.BSONName(): value}
+}
+
+// SetUpdateFromPairs builds an update document with $set using schema fields.
+func SetUpdateFromPairs(pairs ...FieldValuePair) bson.M {
+	set := bson.M{}
+	for _, pair := range pairs {
+		if pair.Field == nil {
+			continue
+		}
+		set[pair.Field.BSONName()] = pair.Value
+	}
+
+	if len(set) == 0 {
+		return bson.M{}
+	}
+
+	return bson.M{"$set": set}
+}
+
+// UnsetUpdateFromFields builds an update document with $unset using schema fields.
+func UnsetUpdateFromFields(fields ...Field) bson.M {
+	unset := bson.M{}
+	for _, field := range fields {
+		if field == nil {
+			continue
+		}
+		unset[field.BSONName()] = 1
+	}
+
+	if len(unset) == 0 {
+		return bson.M{}
+	}
+
+	return bson.M{"$unset": unset}
+}
+
 // NewBulkWriteBuilder creates a new bulk write model builder.
 func NewBulkWriteBuilder[T any]() *BulkWriteBuilder[T] {
 	return &BulkWriteBuilder[T]{
@@ -95,6 +144,16 @@ func (b *BulkWriteBuilder[T]) UpdateOne(
 	return b
 }
 
+// UpdateOneBy appends an update-one model using a schema field equality filter.
+func (b *BulkWriteBuilder[T]) UpdateOneBy(
+	field Field,
+	value any,
+	update bson.M,
+	upsert bool,
+) *BulkWriteBuilder[T] {
+	return b.UpdateOne(FilterBy(field, value), update, upsert)
+}
+
 // UpdateMany appends an update-many write model.
 func (b *BulkWriteBuilder[T]) UpdateMany(
 	filter bson.M,
@@ -110,6 +169,16 @@ func (b *BulkWriteBuilder[T]) UpdateMany(
 	)
 
 	return b
+}
+
+// UpdateManyBy appends an update-many model using a schema field equality filter.
+func (b *BulkWriteBuilder[T]) UpdateManyBy(
+	field Field,
+	value any,
+	update bson.M,
+	upsert bool,
+) *BulkWriteBuilder[T] {
+	return b.UpdateMany(FilterBy(field, value), update, upsert)
 }
 
 // ReplaceOne appends a replace-one write model.
@@ -133,6 +202,16 @@ func (b *BulkWriteBuilder[T]) ReplaceOne(
 	return b
 }
 
+// ReplaceOneBy appends a replace-one model using a schema field equality filter.
+func (b *BulkWriteBuilder[T]) ReplaceOneBy(
+	field Field,
+	value any,
+	replacement *T,
+	upsert bool,
+) *BulkWriteBuilder[T] {
+	return b.ReplaceOne(FilterBy(field, value), replacement, upsert)
+}
+
 // DeleteOne appends a delete-one write model.
 func (b *BulkWriteBuilder[T]) DeleteOne(filter bson.M) *BulkWriteBuilder[T] {
 	b.models = append(b.models, mongo.NewDeleteOneModel().SetFilter(filter))
@@ -140,11 +219,21 @@ func (b *BulkWriteBuilder[T]) DeleteOne(filter bson.M) *BulkWriteBuilder[T] {
 	return b
 }
 
+// DeleteOneBy appends a delete-one model using a schema field equality filter.
+func (b *BulkWriteBuilder[T]) DeleteOneBy(field Field, value any) *BulkWriteBuilder[T] {
+	return b.DeleteOne(FilterBy(field, value))
+}
+
 // DeleteMany appends a delete-many write model.
 func (b *BulkWriteBuilder[T]) DeleteMany(filter bson.M) *BulkWriteBuilder[T] {
 	b.models = append(b.models, mongo.NewDeleteManyModel().SetFilter(filter))
 
 	return b
+}
+
+// DeleteManyBy appends a delete-many model using a schema field equality filter.
+func (b *BulkWriteBuilder[T]) DeleteManyBy(field Field, value any) *BulkWriteBuilder[T] {
+	return b.DeleteMany(FilterBy(field, value))
 }
 
 // Models returns the accumulated write models.

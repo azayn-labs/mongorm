@@ -154,6 +154,15 @@ func (m *MongORM[T]) UnwindStage(path string) *MongORM[T] {
 	return m.Pipeline(bson.M{"$unwind": "$" + path})
 }
 
+// UnwindByStage appends a $unwind stage using a schema field path.
+func (m *MongORM[T]) UnwindByStage(field Field) *MongORM[T] {
+	if field == nil {
+		return m
+	}
+
+	return m.UnwindStage(field.BSONName())
+}
+
 // AddFieldsStage appends a $addFields stage.
 func (m *MongORM[T]) AddFieldsStage(fields bson.M) *MongORM[T] {
 	return m.Pipeline(bson.M{"$addFields": fields})
@@ -194,6 +203,20 @@ func (m *MongORM[T]) LookupStage(
 			"as":           as,
 		},
 	})
+}
+
+// LookupByStage appends a $lookup stage using schema fields for local/foreign keys.
+func (m *MongORM[T]) LookupByStage(
+	from string,
+	localField Field,
+	foreignField Field,
+	as AggregateAlias,
+) *MongORM[T] {
+	if localField == nil || foreignField == nil {
+		return m
+	}
+
+	return m.LookupStage(from, localField.BSONName(), foreignField.BSONName(), as.Key())
 }
 
 // LookupPipelineStage appends a pipeline-based $lookup stage.
