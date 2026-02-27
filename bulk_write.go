@@ -109,6 +109,23 @@ func UnsetUpdateFromFields(fields ...Field) bson.M {
 	return bson.M{"$unset": unset}
 }
 
+// IncUpdateFromPairs builds an update document with $inc using schema fields.
+func IncUpdateFromPairs(pairs ...FieldValuePair) bson.M {
+	inc := bson.M{}
+	for _, pair := range pairs {
+		if pair.Field == nil {
+			continue
+		}
+		inc[pair.Field.BSONName()] = pair.Value
+	}
+
+	if len(inc) == 0 {
+		return bson.M{}
+	}
+
+	return bson.M{"$inc": inc}
+}
+
 // NewBulkWriteBuilder creates a new bulk write model builder.
 func NewBulkWriteBuilder[T any]() *BulkWriteBuilder[T] {
 	return &BulkWriteBuilder[T]{

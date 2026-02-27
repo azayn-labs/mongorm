@@ -67,6 +67,10 @@ func TestMain(t *testing.T) {
 		UpdateLibraryTodoByID(t, toDo.ID, update)
 	})
 
+	t.Run("Update TODO count with inc and decrement", func(t *testing.T) {
+		UpdateLibraryTodoCountWithIncAndDecrement(t)
+	})
+
 	t.Run("Delete TODO by ID", func(t *testing.T) {
 		DeleteLibraryTodoByID(t, toDo.ID)
 	})

@@ -84,6 +84,31 @@ orm.SetData(ToDoFields.User.Email, "john@example.com") // nested path
 
 This is especially useful for dynamic updates or deep nested fields where building a partial struct is cumbersome.
 
+## Increment / Decrement Numeric Fields
+
+Use `IncData(field, value)` (or alias `IncrementData`) for MongoDB `$inc` updates.
+Use `DecData(field, amount)` (or alias `DecrementData`) for decrement operations.
+
+```go
+orm.
+    WhereBy(ToDoFields.ID, targetID).
+    IncData(ToDoFields.Count, int64(3)).
+    Save(ctx)
+
+orm.
+    WhereBy(ToDoFields.ID, targetID).
+    DecData(ToDoFields.Count, 1).
+    Save(ctx)
+```
+
+You can also build strict field-only `$inc` documents for bulk updates:
+
+```go
+update := mongorm.IncUpdateFromPairs(
+    mongorm.FieldValuePair{Field: ToDoFields.Count, Value: int64(2)},
+)
+```
+
 ## Strict field-only workflow (no BSON field keys)
 
 Use field-based helpers end-to-end:

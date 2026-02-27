@@ -201,13 +201,77 @@ func (m *MongORM[T]) UnsetData(field Field) *MongORM[T] {
 	return m
 }
 
+// IncData adds or overrides a single field/value in the current $inc update document.
+// It accepts a schema Field, so nested fields are supported via field paths.
+//
+// Example usage:
+//
+//	orm.Where(ToDoFields.ID.Eq(id)).IncData(ToDoFields.Count, int64(2)).Save(ctx)
+//	orm.Where(ToDoFields.ID.Eq(id)).IncData(ToDoFields.User.Score, 1).Save(ctx)
+func (m *MongORM[T]) IncData(field Field, value any) *MongORM[T] {
+	if field == nil || value == nil {
+		return m
+	}
+
+	fieldName := strings.TrimSpace(field.BSONName())
+	if fieldName == "" {
+		return m
+	}
+
+	if m.pathHasAnyModelTag(fieldName, ModelTagPrimary, ModelTagReadonly, ModelTagTimestampCreatedAt, ModelTagTimestampUpdatedAt) {
+		return m
+	}
+
+	if m.operations.update == nil {
+		m.operations.update = bson.M{}
+	}
+
+	inc, ok := m.operations.update["$inc"].(bson.M)
+	if !ok || inc == nil {
+		inc = bson.M{}
+	}
+
+	inc[fieldName] = value
+	m.markModified(fieldName)
+	m.operations.update["$inc"] = inc
+
+	if m.options.Timestamps {
+		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+		if err == nil {
+			set, ok := m.operations.update["$set"].(bson.M)
+			if !ok || set == nil {
+				set = bson.M{}
+			}
+			set[updatedFieldName] = time.Now()
+			m.markModified(updatedFieldName)
+			m.operations.update["$set"] = set
+		}
+	}
+
+	return m
+}
+
+// DecData decrements a field using MongoDB's $inc with a negative delta.
+//
+// Example usage:
+//
+//	orm.Where(ToDoFields.ID.Eq(id)).DecData(ToDoFields.Count, 1).Save(ctx)
+//	// equivalent raw update: {"$inc": {"count": -1}}
+func (m *MongORM[T]) DecData(field Field, value int64) *MongORM[T] {
+	if value < 0 {
+		value = -value
+	}
+
+	return m.IncData(field, -value)
+}
+
 func (m *MongORM[T]) pathHasAnyModelTag(path string, tags ...ModelTags) bool {
 	path = strings.TrimSpace(path)
 	if path == "" {
 		return false
 	}
 
-	typeOfModel := reflect.TypeOf((*T)(nil)).Elem()
+	typeOfModel := reflect.TypeFor[T]()
 
 	for i := 0; i < typeOfModel.NumField(); i++ {
 		field := typeOfModel.Field(i)

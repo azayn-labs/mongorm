@@ -26,4 +26,12 @@ func TestStrictFilterAndUpdateBuildersFromFields(t *testing.T) {
 	if !reflect.DeepEqual(unset, bson.M{"$unset": bson.M{"user.auth.provider": 1}}) {
 		t.Fatalf("unexpected unset update: %#v", unset)
 	}
+
+	inc := mongorm.IncUpdateFromPairs(
+		mongorm.FieldValuePair{Field: ToDoFields.Count, Value: int64(2)},
+		mongorm.FieldValuePair{Field: ToDoFields.User.Auth.Provider, Value: 1},
+	)
+	if !reflect.DeepEqual(inc, bson.M{"$inc": bson.M{"count": int64(2), "user.auth.provider": 1}}) {
+		t.Fatalf("unexpected inc update: %#v", inc)
+	}
 }

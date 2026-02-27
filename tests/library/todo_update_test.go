@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/azayn-labs/mongorm"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -36,4 +37,44 @@ func UpdateAllLibraryTodo(t *testing.T, update *ToDo) {
 	}
 
 	logger(t, "[TODO] Updated all")
+}
+
+func UpdateLibraryTodoCountWithIncAndDecrement(t *testing.T) {
+	seed := &ToDo{
+		Text:  mongorm.String(fmt.Sprintf("inc-dec-%d", time.Now().UnixNano())),
+		Count: 10,
+	}
+
+	CreateLibraryTodo(t, seed)
+	defer DeleteLibraryTodoByID(t, seed.ID)
+
+	incModel := mongorm.New(&ToDo{})
+	incModel.Where(ToDoFields.ID.Eq(*seed.ID)).IncData(ToDoFields.Count, int64(5))
+	if err := incModel.Save(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	verifyAfterInc := &ToDo{}
+	if err := mongorm.New(verifyAfterInc).Where(ToDoFields.ID.Eq(*seed.ID)).First(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	if verifyAfterInc.Count != 15 {
+		t.Fatalf("expected count 15 after increment, got %d", verifyAfterInc.Count)
+	}
+
+	decModel := mongorm.New(&ToDo{})
+	decModel.Where(ToDoFields.ID.Eq(*seed.ID)).DecData(ToDoFields.Count, 3)
+	if err := decModel.Save(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	verifyAfterDec := &ToDo{}
+	if err := mongorm.New(verifyAfterDec).Where(ToDoFields.ID.Eq(*seed.ID)).First(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	if verifyAfterDec.Count != 12 {
+		t.Fatalf("expected count 12 after decrement, got %d", verifyAfterDec.Count)
+	}
 }

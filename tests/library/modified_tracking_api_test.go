@@ -127,3 +127,33 @@ func TestSetUnsetDataSupportPositionalArrayPath(t *testing.T) {
 		t.Fatal("expected positional unset path to be marked as modified")
 	}
 }
+
+func TestIncAndDecrementDataTrackNestedField(t *testing.T) {
+	m := newTrackingORM()
+
+	m.IncData(TrackingFields.Profile.Provider, 1)
+	if !m.IsModified("profile.provider") {
+		t.Fatal("expected profile.provider to be marked as modified after inc")
+	}
+	if !m.IsModified("profile") {
+		t.Fatal("expected parent profile to be treated as modified after inc")
+	}
+
+	m.DecData(TrackingFields.Profile.Provider, 2)
+	if !m.IsModified("profile.provider") {
+		t.Fatal("expected profile.provider to stay marked as modified after decrement")
+	}
+}
+
+func TestIncAndDecrementDataSkipPrimaryAndReadonly(t *testing.T) {
+	m := newTrackingORM()
+
+	m.IncData(TrackingFields.ID, 1)
+	m.IncData(TrackingFields.Secret, 1)
+	m.DecData(TrackingFields.ID, 1)
+	m.DecData(TrackingFields.Secret, 1)
+
+	if m.IsModified("_id") || m.IsModified("secret") {
+		t.Fatal("expected protected fields not to be marked as modified")
+	}
+}

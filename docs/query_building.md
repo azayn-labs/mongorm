@@ -239,6 +239,15 @@ update := &ToDo{Text: mongorm.String("New text")}
 orm.Where(ToDoFields.ID.Eq(id)).Set(update).Save(ctx)
 ```
 
+## IncData() / DecData()
+
+Use `IncData()` for `$inc` updates and `DecData()` for decrement operations.
+
+```go
+orm.Where(ToDoFields.ID.Eq(id)).IncData(ToDoFields.Count, int64(2)).Save(ctx)
+orm.Where(ToDoFields.ID.Eq(id)).DecData(ToDoFields.Count, 1).Save(ctx)
+```
+
 ## Unset()
 
 `Unset()` removes the specified fields from the document (`$unset`).
