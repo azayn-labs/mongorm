@@ -265,6 +265,218 @@ func (m *MongORM[T]) DecData(field Field, value int64) *MongORM[T] {
 	return m.IncData(field, -value)
 }
 
+// PushData adds or overrides a single field/value in the current $push update document.
+// It accepts a schema Field, so nested fields are supported via field paths.
+func (m *MongORM[T]) PushData(field Field, value any) *MongORM[T] {
+	if field == nil || value == nil {
+		return m
+	}
+
+	fieldName := strings.TrimSpace(field.BSONName())
+	if fieldName == "" {
+		return m
+	}
+
+	if m.pathHasAnyModelTag(fieldName, ModelTagPrimary, ModelTagReadonly, ModelTagTimestampCreatedAt, ModelTagTimestampUpdatedAt) {
+		return m
+	}
+
+	if m.operations.update == nil {
+		m.operations.update = bson.M{}
+	}
+
+	push, ok := m.operations.update["$push"].(bson.M)
+	if !ok || push == nil {
+		push = bson.M{}
+	}
+
+	push[fieldName] = value
+	m.markModified(fieldName)
+	m.operations.update["$push"] = push
+
+	if m.options.Timestamps {
+		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+		if err == nil {
+			set, ok := m.operations.update["$set"].(bson.M)
+			if !ok || set == nil {
+				set = bson.M{}
+			}
+			set[updatedFieldName] = time.Now()
+			m.markModified(updatedFieldName)
+			m.operations.update["$set"] = set
+		}
+	}
+
+	return m
+}
+
+// PushEachData appends multiple values using MongoDB's $push + $each syntax.
+func (m *MongORM[T]) PushEachData(field Field, values []any) *MongORM[T] {
+	if len(values) == 0 {
+		return m
+	}
+
+	return m.PushData(field, bson.M{"$each": values})
+}
+
+// AddToSetData adds or overrides a single field/value in the current $addToSet update document.
+// It accepts a schema Field, so nested fields are supported via field paths.
+func (m *MongORM[T]) AddToSetData(field Field, value any) *MongORM[T] {
+	if field == nil || value == nil {
+		return m
+	}
+
+	fieldName := strings.TrimSpace(field.BSONName())
+	if fieldName == "" {
+		return m
+	}
+
+	if m.pathHasAnyModelTag(fieldName, ModelTagPrimary, ModelTagReadonly, ModelTagTimestampCreatedAt, ModelTagTimestampUpdatedAt) {
+		return m
+	}
+
+	if m.operations.update == nil {
+		m.operations.update = bson.M{}
+	}
+
+	addToSet, ok := m.operations.update["$addToSet"].(bson.M)
+	if !ok || addToSet == nil {
+		addToSet = bson.M{}
+	}
+
+	addToSet[fieldName] = value
+	m.markModified(fieldName)
+	m.operations.update["$addToSet"] = addToSet
+
+	if m.options.Timestamps {
+		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+		if err == nil {
+			set, ok := m.operations.update["$set"].(bson.M)
+			if !ok || set == nil {
+				set = bson.M{}
+			}
+			set[updatedFieldName] = time.Now()
+			m.markModified(updatedFieldName)
+			m.operations.update["$set"] = set
+		}
+	}
+
+	return m
+}
+
+// AddToSetEachData appends multiple values uniquely using MongoDB's $addToSet + $each syntax.
+func (m *MongORM[T]) AddToSetEachData(field Field, values []any) *MongORM[T] {
+	if len(values) == 0 {
+		return m
+	}
+
+	return m.AddToSetData(field, bson.M{"$each": values})
+}
+
+// PullData adds or overrides a single field/value in the current $pull update document.
+// It accepts a schema Field, so nested fields are supported via field paths.
+func (m *MongORM[T]) PullData(field Field, value any) *MongORM[T] {
+	if field == nil || value == nil {
+		return m
+	}
+
+	fieldName := strings.TrimSpace(field.BSONName())
+	if fieldName == "" {
+		return m
+	}
+
+	if m.pathHasAnyModelTag(fieldName, ModelTagPrimary, ModelTagReadonly, ModelTagTimestampCreatedAt, ModelTagTimestampUpdatedAt) {
+		return m
+	}
+
+	if m.operations.update == nil {
+		m.operations.update = bson.M{}
+	}
+
+	pull, ok := m.operations.update["$pull"].(bson.M)
+	if !ok || pull == nil {
+		pull = bson.M{}
+	}
+
+	pull[fieldName] = value
+	m.markModified(fieldName)
+	m.operations.update["$pull"] = pull
+
+	if m.options.Timestamps {
+		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+		if err == nil {
+			set, ok := m.operations.update["$set"].(bson.M)
+			if !ok || set == nil {
+				set = bson.M{}
+			}
+			set[updatedFieldName] = time.Now()
+			m.markModified(updatedFieldName)
+			m.operations.update["$set"] = set
+		}
+	}
+
+	return m
+}
+
+// PopData adds or overrides a single field/value in the current $pop update document.
+// value must be either -1 (remove first) or 1 (remove last).
+func (m *MongORM[T]) PopData(field Field, value int) *MongORM[T] {
+	if field == nil {
+		return m
+	}
+
+	if value != -1 && value != 1 {
+		return m
+	}
+
+	fieldName := strings.TrimSpace(field.BSONName())
+	if fieldName == "" {
+		return m
+	}
+
+	if m.pathHasAnyModelTag(fieldName, ModelTagPrimary, ModelTagReadonly, ModelTagTimestampCreatedAt, ModelTagTimestampUpdatedAt) {
+		return m
+	}
+
+	if m.operations.update == nil {
+		m.operations.update = bson.M{}
+	}
+
+	pop, ok := m.operations.update["$pop"].(bson.M)
+	if !ok || pop == nil {
+		pop = bson.M{}
+	}
+
+	pop[fieldName] = value
+	m.markModified(fieldName)
+	m.operations.update["$pop"] = pop
+
+	if m.options.Timestamps {
+		_, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt)
+		if err == nil {
+			set, ok := m.operations.update["$set"].(bson.M)
+			if !ok || set == nil {
+				set = bson.M{}
+			}
+			set[updatedFieldName] = time.Now()
+			m.markModified(updatedFieldName)
+			m.operations.update["$set"] = set
+		}
+	}
+
+	return m
+}
+
+// PopFirstData removes the first element from an array field.
+func (m *MongORM[T]) PopFirstData(field Field) *MongORM[T] {
+	return m.PopData(field, -1)
+}
+
+// PopLastData removes the last element from an array field.
+func (m *MongORM[T]) PopLastData(field Field) *MongORM[T] {
+	return m.PopData(field, 1)
+}
+
 func (m *MongORM[T]) pathHasAnyModelTag(path string, tags ...ModelTags) bool {
 	path = strings.TrimSpace(path)
 	if path == "" {

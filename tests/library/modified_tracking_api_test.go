@@ -157,3 +157,41 @@ func TestIncAndDecrementDataSkipPrimaryAndReadonly(t *testing.T) {
 		t.Fatal("expected protected fields not to be marked as modified")
 	}
 }
+
+func TestArrayUpdateDataTrackFieldPaths(t *testing.T) {
+	m := newTrackingORM()
+
+	itemsPath := mongorm.RawField("items")
+	if itemsPath == nil {
+		t.Fatal("expected non-nil items path")
+	}
+
+	m.PushData(itemsPath, bson.M{"name": "first"})
+	m.PushEachData(itemsPath, []any{bson.M{"name": "second"}, bson.M{"name": "third"}})
+	m.AddToSetData(itemsPath, bson.M{"name": "unique"})
+	m.AddToSetEachData(itemsPath, []any{"a", "b"})
+	m.PullData(itemsPath, bson.M{"name": "first"})
+	m.PopFirstData(itemsPath)
+	m.PopLastData(itemsPath)
+
+	if !m.IsModified("items") {
+		t.Fatal("expected items to be marked as modified by array update APIs")
+	}
+}
+
+func TestArrayUpdateDataSkipPrimaryAndReadonly(t *testing.T) {
+	m := newTrackingORM()
+
+	m.PushData(TrackingFields.ID, 1)
+	m.PushData(TrackingFields.Secret, 1)
+	m.AddToSetData(TrackingFields.ID, 1)
+	m.AddToSetData(TrackingFields.Secret, 1)
+	m.PullData(TrackingFields.ID, 1)
+	m.PullData(TrackingFields.Secret, 1)
+	m.PopData(TrackingFields.ID, 1)
+	m.PopData(TrackingFields.Secret, -1)
+
+	if m.IsModified("_id") || m.IsModified("secret") {
+		t.Fatal("expected protected fields not to be marked as modified")
+	}
+}

@@ -34,4 +34,32 @@ func TestStrictFilterAndUpdateBuildersFromFields(t *testing.T) {
 	if !reflect.DeepEqual(inc, bson.M{"$inc": bson.M{"count": int64(2), "user.auth.provider": 1}}) {
 		t.Fatalf("unexpected inc update: %#v", inc)
 	}
+
+	push := mongorm.PushUpdateFromPairs(
+		mongorm.FieldValuePair{Field: ToDoFields.Tags, Value: "urgent"},
+	)
+	if !reflect.DeepEqual(push, bson.M{"$push": bson.M{"tags": "urgent"}}) {
+		t.Fatalf("unexpected push update: %#v", push)
+	}
+
+	addToSet := mongorm.AddToSetUpdateFromPairs(
+		mongorm.FieldValuePair{Field: ToDoFields.Tags, Value: bson.M{"$each": []any{"urgent", "backend"}}},
+	)
+	if !reflect.DeepEqual(addToSet, bson.M{"$addToSet": bson.M{"tags": bson.M{"$each": []any{"urgent", "backend"}}}}) {
+		t.Fatalf("unexpected addToSet update: %#v", addToSet)
+	}
+
+	pull := mongorm.PullUpdateFromPairs(
+		mongorm.FieldValuePair{Field: ToDoFields.Tags, Value: "deprecated"},
+	)
+	if !reflect.DeepEqual(pull, bson.M{"$pull": bson.M{"tags": "deprecated"}}) {
+		t.Fatalf("unexpected pull update: %#v", pull)
+	}
+
+	pop := mongorm.PopUpdateFromPairs(
+		mongorm.FieldValuePair{Field: ToDoFields.Tags, Value: 1},
+	)
+	if !reflect.DeepEqual(pop, bson.M{"$pop": bson.M{"tags": 1}}) {
+		t.Fatalf("unexpected pop update: %#v", pop)
+	}
 }

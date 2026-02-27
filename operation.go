@@ -38,7 +38,8 @@ func (o *MongORMOperations) reset() {
 
 // fixUpdate ensures that the update document is properly structured for MongoDB operations.
 // It checks if the update document is nil and initializes it if necessary. It also removes
-// any empty $set, $unset, or $inc operations to prevent sending unnecessary updates to the database.
+// any empty update operators (such as $set, $unset, $inc, $push, $addToSet, $pull, and $pop)
+// to prevent sending unnecessary updates to the database.
 // This method should be called before executing an update operation to ensure that the
 // update document is in the correct format.
 //
@@ -61,6 +62,26 @@ func (o *MongORMOperations) fixUpdate() {
 	inc, ok := o.update["$inc"].(bson.M)
 	if ok && len(inc) == 0 {
 		delete(o.update, "$inc")
+	}
+
+	push, ok := o.update["$push"].(bson.M)
+	if ok && len(push) == 0 {
+		delete(o.update, "$push")
+	}
+
+	addToSet, ok := o.update["$addToSet"].(bson.M)
+	if ok && len(addToSet) == 0 {
+		delete(o.update, "$addToSet")
+	}
+
+	pull, ok := o.update["$pull"].(bson.M)
+	if ok && len(pull) == 0 {
+		delete(o.update, "$pull")
+	}
+
+	pop, ok := o.update["$pop"].(bson.M)
+	if ok && len(pop) == 0 {
+		delete(o.update, "$pop")
 	}
 }
 

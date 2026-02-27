@@ -109,6 +109,54 @@ update := mongorm.IncUpdateFromPairs(
 )
 ```
 
+## Array Update Operators
+
+Use field-safe helpers for MongoDB array update operators:
+
+```go
+orm.
+    WhereBy(ToDoFields.ID, targetID).
+    PushData(ToDoFields.Tags, "urgent").
+    AddToSetData(ToDoFields.Tags, "backend").
+    PullData(ToDoFields.Tags, "deprecated").
+    PopLastData(ToDoFields.Tags).
+    Save(ctx)
+```
+
+Batch variants using `$each` are also available:
+
+```go
+orm.PushEachData(ToDoFields.Tags, []any{"urgent", "backend"})
+orm.AddToSetEachData(ToDoFields.Tags, []any{"urgent", "backend"})
+```
+
+If you need explicit direction control for `$pop`, use:
+
+```go
+orm.PopData(ToDoFields.Tags, -1) // first
+orm.PopData(ToDoFields.Tags, 1)  // last
+```
+
+You can build strict field-only update docs for bulk workflows as well:
+
+```go
+push := mongorm.PushUpdateFromPairs(
+    mongorm.FieldValuePair{Field: ToDoFields.Tags, Value: "urgent"},
+)
+
+addToSet := mongorm.AddToSetUpdateFromPairs(
+    mongorm.FieldValuePair{Field: ToDoFields.Tags, Value: bson.M{"$each": []any{"urgent", "backend"}}},
+)
+
+pull := mongorm.PullUpdateFromPairs(
+    mongorm.FieldValuePair{Field: ToDoFields.Tags, Value: "deprecated"},
+)
+
+pop := mongorm.PopUpdateFromPairs(
+    mongorm.FieldValuePair{Field: ToDoFields.Tags, Value: 1},
+)
+```
+
 ## Strict field-only workflow (no BSON field keys)
 
 Use field-based helpers end-to-end:

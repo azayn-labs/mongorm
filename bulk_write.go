@@ -126,6 +126,74 @@ func IncUpdateFromPairs(pairs ...FieldValuePair) bson.M {
 	return bson.M{"$inc": inc}
 }
 
+// PushUpdateFromPairs builds an update document with $push using schema fields.
+func PushUpdateFromPairs(pairs ...FieldValuePair) bson.M {
+	push := bson.M{}
+	for _, pair := range pairs {
+		if pair.Field == nil {
+			continue
+		}
+		push[pair.Field.BSONName()] = pair.Value
+	}
+
+	if len(push) == 0 {
+		return bson.M{}
+	}
+
+	return bson.M{"$push": push}
+}
+
+// AddToSetUpdateFromPairs builds an update document with $addToSet using schema fields.
+func AddToSetUpdateFromPairs(pairs ...FieldValuePair) bson.M {
+	addToSet := bson.M{}
+	for _, pair := range pairs {
+		if pair.Field == nil {
+			continue
+		}
+		addToSet[pair.Field.BSONName()] = pair.Value
+	}
+
+	if len(addToSet) == 0 {
+		return bson.M{}
+	}
+
+	return bson.M{"$addToSet": addToSet}
+}
+
+// PullUpdateFromPairs builds an update document with $pull using schema fields.
+func PullUpdateFromPairs(pairs ...FieldValuePair) bson.M {
+	pull := bson.M{}
+	for _, pair := range pairs {
+		if pair.Field == nil {
+			continue
+		}
+		pull[pair.Field.BSONName()] = pair.Value
+	}
+
+	if len(pull) == 0 {
+		return bson.M{}
+	}
+
+	return bson.M{"$pull": pull}
+}
+
+// PopUpdateFromPairs builds an update document with $pop using schema fields.
+func PopUpdateFromPairs(pairs ...FieldValuePair) bson.M {
+	pop := bson.M{}
+	for _, pair := range pairs {
+		if pair.Field == nil {
+			continue
+		}
+		pop[pair.Field.BSONName()] = pair.Value
+	}
+
+	if len(pop) == 0 {
+		return bson.M{}
+	}
+
+	return bson.M{"$pop": pop}
+}
+
 // NewBulkWriteBuilder creates a new bulk write model builder.
 func NewBulkWriteBuilder[T any]() *BulkWriteBuilder[T] {
 	return &BulkWriteBuilder[T]{
