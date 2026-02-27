@@ -206,3 +206,45 @@ func TestUnsetDataTracksNestedField(t *testing.T) {
 		t.Fatal("expected parent profile to be treated as modified")
 	}
 }
+
+func TestSetDataSupportsPositionalArrayPath(t *testing.T) {
+	m := newModifiedTrackingModel()
+
+	path := FieldPath(PositionalFiltered(RawField("items"), "item"), "name")
+	m.SetData(path, "updated-name")
+
+	set, ok := m.operations.update["$set"].(bson.M)
+	if !ok {
+		t.Fatal("expected $set update document")
+	}
+
+	expected := bson.M{"items.$[item].name": "updated-name"}
+	if !reflect.DeepEqual(set, expected) {
+		t.Fatalf("unexpected positional $set payload: %#v", set)
+	}
+
+	if !m.IsModified("items.$[item].name") {
+		t.Fatal("expected positional nested path to be marked as modified")
+	}
+}
+
+func TestUnsetDataSupportsPositionalArrayPath(t *testing.T) {
+	m := newModifiedTrackingModel()
+
+	path := FieldPath(Positional(RawField("items")), "name")
+	m.UnsetData(path)
+
+	unset, ok := m.operations.update["$unset"].(bson.M)
+	if !ok {
+		t.Fatal("expected $unset update document")
+	}
+
+	expected := bson.M{"items.$.name": 1}
+	if !reflect.DeepEqual(unset, expected) {
+		t.Fatalf("unexpected positional $unset payload: %#v", unset)
+	}
+
+	if !m.IsModified("items.$.name") {
+		t.Fatal("expected positional unset path to be marked as modified")
+	}
+}

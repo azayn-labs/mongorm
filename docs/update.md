@@ -100,6 +100,40 @@ orm.UnsetData(ToDoFields.Text)
 orm.UnsetData(ToDoFields.User.Email) // nested path
 ```
 
+## Array positional updates
+
+You can build positional paths and use them with `SetData` / `UnsetData`.
+
+```go
+import "go.mongodb.org/mongo-driver/v2/mongo/options"
+
+// items.$[item].name = "updated"
+path := mongorm.FieldPath(
+    mongorm.PositionalFiltered(ToDoFields.Items, "item"),
+    "name",
+)
+
+orm.SetData(path, "updated")
+
+err := orm.Save(
+    ctx,
+    options.FindOneAndUpdate().SetArrayFilters(
+        options.ArrayFilters{Filters: []any{bson.M{"item.id": targetID}}},
+    ),
+)
+
+// items.$.name unset
+orm.UnsetData(mongorm.FieldPath(mongorm.Positional(ToDoFields.Items), "name"))
+```
+
+Available helpers:
+
+- `mongorm.Positional(field)` => `x.$`
+- `mongorm.PositionalAll(field)` => `x.$[]`
+- `mongorm.PositionalFiltered(field, "id")` => `x.$[id]`
+- `mongorm.Indexed(field, 2)` => `x.2`
+- `mongorm.FieldPath(base, "y.z")` => append nested path
+
 ## Empty Update Guard
 
 For single-document updates (`Save()` / `Update()`), MongORM returns an explicit configuration error when no update operators are present.
