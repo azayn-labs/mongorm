@@ -42,6 +42,10 @@ func TestMain(t *testing.T) {
 		CreateLibraryTodo(t, toDo)
 	})
 
+	t.Run("Save create with Set merges fields", func(t *testing.T) {
+		TestSaveCreateWithSetMergesSchemaFields(t)
+	})
+
 	t.Run("Find TODO by ID", func(t *testing.T) {
 		FindLibraryTodoByID(t, toDo.ID)
 	})

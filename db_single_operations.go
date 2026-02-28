@@ -2,7 +2,9 @@ package mongorm
 
 import (
 	"context"
+	"strings"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
@@ -107,7 +109,9 @@ func (m *MongORM[T]) Save(
 		return err
 	}
 
-	if hasExplicitUpdate || len(m.operations.query) > 0 {
+	hasSelector := len(filter) > 0
+
+	if hasSelector && (hasExplicitUpdate || len(m.operations.query) > 0) {
 		m.rebuildModifiedFromUpdate(m.operations.update)
 
 		if hook, ok := schema.(BeforeSaveHook[T]); ok {
@@ -153,17 +157,18 @@ func (m *MongORM[T]) Save(
 			return err
 		}
 	} else {
-		m.rebuildModifiedFromSchema()
-
 		// Insert new document
 		if hook, ok := schema.(BeforeSaveHook[T]); ok {
 			if err := hook.BeforeSave(m, nil); err != nil {
 				return err
 			}
+		}
 
-			// Re-normalize updates only when hook mutations may have happened.
-			m.operations.fixUpdate()
-			m.rebuildModifiedFromUpdate(m.operations.update)
+		m.operations.fixUpdate()
+		if len(m.operations.update) > 0 {
+			if err := m.applyUpdateOpsToSchemaForInsert(); err != nil {
+				return err
+			}
 		}
 
 		if err := m.insertOne(ctx); err != nil {
@@ -178,6 +183,100 @@ func (m *MongORM[T]) Save(
 	}
 
 	return nil
+}
+
+func (m *MongORM[T]) applyUpdateOpsToSchemaForInsert() error {
+	if m == nil || m.schema == nil || len(m.operations.update) == 0 {
+		return nil
+	}
+
+	raw, err := bson.Marshal(m.schema)
+	if err != nil {
+		return err
+	}
+
+	doc := bson.M{}
+	if err := bson.Unmarshal(raw, &doc); err != nil {
+		return err
+	}
+
+	if setDoc, ok := m.operations.update["$set"].(bson.M); ok {
+		for path, value := range setDoc {
+			setBSONPathValue(doc, path, value)
+		}
+	}
+
+	if unsetDoc, ok := m.operations.update["$unset"].(bson.M); ok {
+		for path := range unsetDoc {
+			deleteBSONPathValue(doc, path)
+		}
+	}
+
+	updatedRaw, err := bson.Marshal(doc)
+	if err != nil {
+		return err
+	}
+
+	var updated T
+	if err := bson.Unmarshal(updatedRaw, &updated); err != nil {
+		return err
+	}
+
+	*m.schema = updated
+	m.operations.update = bson.M{}
+	return nil
+}
+
+func setBSONPathValue(doc bson.M, path string, value any) {
+	segments := splitBSONPath(path)
+	if len(segments) == 0 {
+		return
+	}
+
+	current := doc
+	for i := 0; i < len(segments)-1; i++ {
+		key := segments[i]
+		next, ok := current[key].(bson.M)
+		if !ok || next == nil {
+			next = bson.M{}
+			current[key] = next
+		}
+		current = next
+	}
+
+	current[segments[len(segments)-1]] = value
+}
+
+func deleteBSONPathValue(doc bson.M, path string) {
+	segments := splitBSONPath(path)
+	if len(segments) == 0 {
+		return
+	}
+
+	current := doc
+	for i := 0; i < len(segments)-1; i++ {
+		next, ok := current[segments[i]].(bson.M)
+		if !ok || next == nil {
+			return
+		}
+		current = next
+	}
+
+	delete(current, segments[len(segments)-1])
+}
+
+func splitBSONPath(path string) []string {
+	parts := strings.Split(strings.TrimSpace(path), ".")
+	segments := make([]string, 0, len(parts))
+	for _, part := range parts {
+		normalized := strings.TrimSpace(part)
+		if normalized == "" {
+			continue
+		}
+		segments = append(segments, normalized)
+	}
+
+	return segments
 }
 
 // FindOneAndUpdate updates a single existing document that matches the current
