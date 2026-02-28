@@ -17,11 +17,14 @@ func TestGetRawQueryReturnsCopy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected query to be encodable, got: %v", err)
 	}
-	if !strings.Contains(string(encodedQuery), "\"$and\"") {
-		t.Fatalf("expected $and query conditions, got: %s", string(encodedQuery))
+	if strings.Contains(string(encodedQuery), "\"$and\"") {
+		t.Fatalf("expected plain query conditions without $and, got: %s", string(encodedQuery))
+	}
+	if !strings.Contains(string(encodedQuery), "\"count\":") {
+		t.Fatalf("expected count query condition, got: %s", string(encodedQuery))
 	}
 
-	rawQuery["$and"] = bson.A{bson.M{"count": int64(999)}}
+	rawQuery["count"] = int64(999)
 	freshQuery := model.GetRawQuery()
 	freshEncodedQuery, err := bson.MarshalExtJSON(freshQuery, true, false)
 	if err != nil {
@@ -34,6 +37,25 @@ func TestGetRawQueryReturnsCopy(t *testing.T) {
 	}
 	if !strings.Contains(jsonQuery, "\"7\"") {
 		t.Fatalf("expected original count filter value in internal query, got: %s", jsonQuery)
+	}
+}
+
+func TestWhereAndAddsExplicitAndOperator(t *testing.T) {
+	model := mongorm.New(&ToDo{})
+	model.WhereAnd(
+		ToDoFields.Count.Eq(int64(7)),
+		ToDoFields.Done.Eq(false),
+	)
+
+	rawQuery := model.GetRawQuery()
+	encodedQuery, err := bson.MarshalExtJSON(rawQuery, true, false)
+	if err != nil {
+		t.Fatalf("expected query to be encodable, got: %v", err)
+	}
+
+	jsonQuery := string(encodedQuery)
+	if !strings.Contains(jsonQuery, "\"$and\"") {
+		t.Fatalf("expected explicit $and in query, got: %s", jsonQuery)
 	}
 }
 

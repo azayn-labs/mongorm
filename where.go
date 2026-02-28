@@ -1,6 +1,8 @@
 package mongorm
 
 import (
+	"maps"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -24,9 +26,8 @@ func (m *MongORM[T]) appendQueryExpression(operator string, expr bson.M) *MongOR
 	return m
 }
 
-// Where adds a query filter to the MongORM instance. It takes a bson.M expression as an
-// argument and appends it to the existing query filters using the $and operator.
-// This allows you to chain multiple query filters together using the $and operator.
+// Where adds a query filter to the MongORM instance as plain top-level query fields.
+// Repeated calls merge into the same query document.
 //
 // Example usage:
 //
@@ -34,13 +35,32 @@ func (m *MongORM[T]) appendQueryExpression(operator string, expr bson.M) *MongOR
 //	// OR
 //	orm.Where(fielType.Age.Gt(30)).Where(fieldType.Name.Eq("John"))
 func (m *MongORM[T]) Where(expr bson.M) *MongORM[T] {
-	return m.appendQueryExpression("$and", expr)
+	if expr == nil {
+		return m
+	}
+
+	if m.operations.query == nil {
+		m.operations.query = bson.M{}
+	}
+
+	maps.Copy(m.operations.query, expr)
+
+	return m
 }
 
-// Where adds a query filter for a specific field and value to the MongORM instance.
-// It constructs a bson.M expression for the given field and value and appends it to the
-// existing query filters using the $and operator. This allows you to chain multiple query
-// filters together using the $and operator.
+// WhereAnd adds one or more query expressions under the $and operator.
+// Use this when explicit $and grouping is required.
+func (m *MongORM[T]) WhereAnd(exprs ...bson.M) *MongORM[T] {
+	for _, expr := range exprs {
+		m.appendQueryExpression("$and", expr)
+	}
+
+	return m
+}
+
+// WhereBy adds a query filter for a specific field and value to the MongORM instance.
+// It constructs a bson.M expression for the given field and value and merges it as
+// top-level query fields.
 //
 // Example usage:
 //
