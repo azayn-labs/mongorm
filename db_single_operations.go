@@ -192,6 +192,71 @@ func (m *MongORM[T]) Update(
 	return m.Save(ctx)
 }
 
+// FindOneAndUpdate updates a single existing document that matches the current
+// query criteria and decodes the updated document back into the schema.
+//
+// Unlike Save/Update, this method never performs an upsert. If no document
+// matches the query criteria, it returns ErrNotFound.
+//
+// Example usage:
+//
+//	err := mongormInstance.Where(...).Set(...).FindOneAndUpdate(ctx)
+//	if err != nil {
+//	    // Handle error
+//	}
+func (m *MongORM[T]) FindOneAndUpdate(
+	ctx context.Context,
+	opts ...options.Lister[options.FindOneAndUpdateOptions],
+) error {
+	if err := m.ensureReady(); err != nil {
+		return err
+	}
+
+	m.clearModified()
+	m.applyTimestamps()
+	m.operations.fixUpdate()
+
+	filter, id, err := m.withPrimaryFilters()
+	if err != nil {
+		return err
+	}
+
+	if len(filter) == 0 {
+		return configErrorf("findOneAndUpdate requires a filter or primary key")
+	}
+
+	m.rebuildModifiedFromUpdate(m.operations.update)
+
+	optimisticLockEnabled := false
+	if id != nil {
+		optimisticLockEnabled, err = m.applyOptimisticLock(&filter, &m.operations.update)
+		if err != nil {
+			return err
+		}
+		m.rebuildModifiedFromUpdate(m.operations.update)
+	}
+
+	if len(m.operations.update) == 0 {
+		return configErrorf("no update operations specified")
+	}
+
+	if len(opts) == 0 {
+		opts = []options.Lister[options.FindOneAndUpdateOptions]{
+			options.FindOneAndUpdate().SetUpsert(false),
+		}
+	} else {
+		opts = append(opts, options.FindOneAndUpdate().SetUpsert(false))
+	}
+
+	return m.updateOne(
+		ctx,
+		&filter,
+		&m.operations.update,
+		optimisticLockEnabled,
+		opts...,
+	)
+}
+
 // Delete removes a single document that matches the specified query criteria from the
 // collection. It uses the DeleteOne method of the MongoDB collection to execute the delete
 // operation. The query is constructed based on the state of the MongORM instance, and it

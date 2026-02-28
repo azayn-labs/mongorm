@@ -71,6 +71,10 @@ func TestMain(t *testing.T) {
 		UpdateLibraryTodoCountWithIncAndDecrement(t)
 	})
 
+	t.Run("FindOneAndUpdate returns not found", func(t *testing.T) {
+		UpdateLibraryTodoFindOneAndUpdateNotFound(t)
+	})
+
 	t.Run("Delete TODO by ID", func(t *testing.T) {
 		DeleteLibraryTodoByID(t, toDo.ID)
 	})

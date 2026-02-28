@@ -63,6 +63,30 @@ if err := orm.Update(ctx); err != nil {
 }
 ```
 
+## FindOneAndUpdate (No Upsert)
+
+Use `FindOneAndUpdate()` when you want strict update-only behavior.
+
+- It updates exactly one matching document.
+- It **does not upsert**.
+- It returns `ErrNotFound` when no document matches.
+
+```go
+err := mongorm.New(&ToDo{}).
+    Where(ToDoFields.ID.Eq(targetID)).
+    Set(&ToDo{Text: mongorm.String("Run task")}).
+    FindOneAndUpdate(ctx)
+
+if err != nil {
+    if errors.Is(err, mongorm.ErrNotFound) {
+        // no matching document to update
+    }
+    panic(err)
+}
+```
+
+`FindOneAndUpdate()` also requires a selector (`Where()` or primary key on schema) and at least one update operator (`Set()`, `Unset()`, `IncData()`, etc.).
+
 ## How Set() Works
 
 `Set()` accepts a pointer to a partial model struct. Only non-nil pointer fields and non-zero value fields are included in the `$set` operation. The primary key and `readonly` fields are always skipped.
@@ -278,7 +302,7 @@ See [Timestamps](./timestamps.md) for more details.
 - If a matching document is found (via `Where()` filters or a set primary key), it is updated.
 - If no matching document exists and no filter is set, a new document is inserted.
 
-Use `SaveMulti()` when you explicitly want to update many documents and do not want insert behaviour.
+Use `FindOneAndUpdate()` when you need strict single-document update without insert behavior. Use `SaveMulti()` when you explicitly want to update many documents and do not want insert behavior.
 
 ## Optimistic Locking with `_version`
 

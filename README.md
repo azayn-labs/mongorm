@@ -146,7 +146,7 @@ Full documentation is in the [`docs/`](./docs/index.md) folder.
 Quick map of commonly used entry points and where they are documented:
 
 - Core initialization: `New()`, `FromOptions()`, `NewClient()` → [Configuration](./docs/configuration.md)
-- CRUD execution: `Save()`, `Update()`, `SaveMulti()`, `Delete()`, `DeleteMulti()`, `First()` / `Find()` → [Creating Documents](./docs/create.md), [Finding Documents](./docs/find.md), [Updating Documents](./docs/update.md), [Deleting Documents](./docs/delete.md)
+- CRUD execution: `Save()`, `Update()`, `FindOneAndUpdate()`, `SaveMulti()`, `Delete()`, `DeleteMulti()`, `First()` / `Find()` → [Creating Documents](./docs/create.md), [Finding Documents](./docs/find.md), [Updating Documents](./docs/update.md), [Deleting Documents](./docs/delete.md)
 - Query builders: `Where()`, `WhereBy()`, `OrWhere()`, `OrWhereBy()`, `Sort()`, `Limit()`, `Skip()`, `Projection()`, `After()` / `Before()`, `PaginateAfter()` / `PaginateBefore()`, `Set()`, `Unset()` → [Query Building](./docs/query_building.md)
 - Typed read helpers: `FindOneAs[T, R]()`, `FindAllAs[T, R]()` → [Finding Documents](./docs/find.md)
 - Distinct and count: `Count()`, `Distinct()`, `DistinctFieldAs[T, V]()`, `DistinctStrings()`, `DistinctInt64()`, `DistinctBool()`, `DistinctFloat64()`, `DistinctObjectIDs()`, `DistinctTimes()` → [Finding Documents](./docs/find.md)

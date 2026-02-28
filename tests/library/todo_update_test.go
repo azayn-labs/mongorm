@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -76,5 +77,21 @@ func UpdateLibraryTodoCountWithIncAndDecrement(t *testing.T) {
 
 	if verifyAfterDec.Count != 12 {
 		t.Fatalf("expected count 12 after decrement, got %d", verifyAfterDec.Count)
+	}
+}
+
+func UpdateLibraryTodoFindOneAndUpdateNotFound(t *testing.T) {
+	targetID := bson.NewObjectID()
+
+	todoModel := mongorm.New(&ToDo{})
+	todoModel.Where(ToDoFields.ID.Eq(targetID)).Set(&ToDo{Text: mongorm.String("should-not-upsert")})
+
+	err := todoModel.FindOneAndUpdate(t.Context())
+	if err == nil {
+		t.Fatal("expected not found error")
+	}
+
+	if !errors.Is(err, mongorm.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got: %v", err)
 	}
 }
