@@ -209,7 +209,29 @@ func populateSchemaFields(modelType reflect.Type, schemaValue reflect.Value, pre
 // Creates a Field object based on a schema field type. This lets schema definitions
 // explicitly select a primitive wrapper, even when the model field Go type differs.
 func NewFieldFromSchemaType(t reflect.Type, name string) (Field, bool) {
+	if t.Kind() == reflect.Pointer || t.Kind() == reflect.Slice || t.Kind() == reflect.Array {
+		return NewFieldFromSchemaType(t.Elem(), name)
+	}
+
 	switch t {
+	case reflect.TypeOf(primitives.StringField{}):
+		return primitives.StringType(name), true
+	case reflect.TypeOf(primitives.Int64Field{}):
+		return primitives.Int64Type(name), true
+	case reflect.TypeOf(primitives.Float64Field{}):
+		return primitives.Float64Type(name), true
+	case reflect.TypeOf(primitives.BoolField{}):
+		return primitives.BoolType(name), true
+	case reflect.TypeOf(primitives.ObjectIDField{}):
+		return primitives.ObjectIDType(name), true
+	case reflect.TypeOf(primitives.TimestampField{}):
+		return primitives.TimestampType(name), true
+	case reflect.TypeOf(primitives.GeoField{}):
+		return primitives.GeoType(name), true
+	case reflect.TypeOf(primitives.GenericField{}):
+		return primitives.GenericType(name), true
+	case reflect.TypeOf(primitives.StringArrayField{}):
+		return primitives.StringArrayType(name), true
 	case reflect.TypeOf((*primitives.StringField)(nil)):
 		return primitives.StringType(name), true
 	case reflect.TypeOf((*primitives.Int64Field)(nil)):
@@ -345,6 +367,43 @@ func setSchemaField(target reflect.Value, fieldObj Field) bool {
 
 	value := reflect.ValueOf(fieldObj)
 	targetType := target.Type()
+
+	if target.Kind() == reflect.Pointer {
+		elemType := targetType.Elem()
+
+		if elemType.Kind() == reflect.Slice {
+			sliceElemType := elemType.Elem()
+			elemValue, ok := coerceFieldValueForType(value, sliceElemType)
+			if !ok {
+				return false
+			}
+
+			slice := reflect.MakeSlice(elemType, 1, 1)
+			slice.Index(0).Set(elemValue)
+
+			ptr := reflect.New(elemType)
+			ptr.Elem().Set(slice)
+			target.Set(ptr)
+			return true
+		}
+
+		if elemType.Kind() == reflect.Array {
+			if elemType.Len() == 0 {
+				return false
+			}
+
+			arrayElemType := elemType.Elem()
+			elemValue, ok := coerceFieldValueForType(value, arrayElemType)
+			if !ok {
+				return false
+			}
+
+			ptr := reflect.New(elemType)
+			ptr.Elem().Index(0).Set(elemValue)
+			target.Set(ptr)
+			return true
+		}
+	}
 
 	if target.Kind() == reflect.Slice {
 		elemType := targetType.Elem()

@@ -21,6 +21,12 @@ type todoCompatSchema struct {
 
 var todoCompatFields = mongorm.FieldsOf[todoCompatModel, todoCompatSchema]()
 
+type todoPtrArrayCompatSchema struct {
+	History *[]primitives.GenericField
+}
+
+var todoPtrArrayCompatFields = mongorm.FieldsOf[todoCompatModel, todoPtrArrayCompatSchema]()
+
 func TestArraySchemaFieldCanBeUsedInPushData(t *testing.T) {
 	if len(todoCompatFields.History) == 0 {
 		t.Fatal("expected generated history field entry for []primitives.GenericField schema")
@@ -36,5 +42,22 @@ func TestArraySchemaFieldCanBeUsedInPushData(t *testing.T) {
 
 	if !m.IsModified(todoCompatFields.History) {
 		t.Fatal("expected history to be marked as modified after PushData")
+	}
+}
+
+func TestPointerArraySchemaFieldCanBeUsedInAddToSetData(t *testing.T) {
+	if todoPtrArrayCompatFields.History == nil || len(*todoPtrArrayCompatFields.History) == 0 {
+		t.Fatal("expected generated history field entry for *[]primitives.GenericField schema")
+	}
+
+	if (*todoPtrArrayCompatFields.History)[0].BSONName() != "history" {
+		t.Fatalf("expected history bson path, got %q", (*todoPtrArrayCompatFields.History)[0].BSONName())
+	}
+
+	m := mongorm.New(&todoCompatModel{})
+	m.AddToSetData(todoPtrArrayCompatFields.History, map[string]any{"id": "todo_234"})
+
+	if !m.IsModified(todoPtrArrayCompatFields.History) {
+		t.Fatal("expected history to be marked as modified after AddToSetData")
 	}
 }

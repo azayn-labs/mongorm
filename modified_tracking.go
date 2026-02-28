@@ -14,7 +14,7 @@ func (m *MongORM[T]) IsModified(field any) bool {
 		return false
 	}
 
-	normalized := strings.TrimSpace(resolveFieldBSONName(field))
+	normalized := strings.TrimSpace(m.resolveFieldBSONName(field))
 	if normalized == "" {
 		return false
 	}
@@ -56,7 +56,7 @@ func (m *MongORM[T]) ModifiedValue(field any) (oldValue any, newValue any, ok bo
 		return nil, nil, false
 	}
 
-	path := strings.TrimSpace(resolveFieldBSONName(field))
+	path := strings.TrimSpace(m.resolveFieldBSONName(field))
 	if path == "" {
 		return nil, nil, false
 	}

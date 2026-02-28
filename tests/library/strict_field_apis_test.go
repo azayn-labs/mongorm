@@ -63,3 +63,19 @@ func TestStrictFilterAndUpdateBuildersFromFields(t *testing.T) {
 		t.Fatalf("unexpected pop update: %#v", pop)
 	}
 }
+
+func TestAddToSetDataAcceptsField(t *testing.T) {
+	model := mongorm.New(&ToDo{})
+	model.AddToSetData(ToDoFields.Tags, "vip")
+
+	rawUpdate := model.GetRawUpdate()
+	encoded, err := bson.MarshalExtJSON(rawUpdate, true, false)
+	if err != nil {
+		t.Fatalf("expected update to be encodable, got: %v", err)
+	}
+
+	jsonUpdate := string(encoded)
+	if jsonUpdate != "{\"$addToSet\":{\"tags\":\"vip\"}}" {
+		t.Fatalf("unexpected addToSet update from field: %s", jsonUpdate)
+	}
+}

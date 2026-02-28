@@ -54,6 +54,10 @@ func resolveFieldBSONName(field any) string {
 	return ""
 }
 
+func (m *MongORM[T]) resolveFieldBSONName(field any) string {
+	return resolveFieldBSONName(field)
+}
+
 // Set adds the specified fields and values to the update document for the current operation.
 // It takes a pointer to a struct of type T, which represents the fields to be updated.
 // The method iterates through the fields of the struct, checking for non-zero values and
@@ -153,7 +157,7 @@ func (m *MongORM[T]) Set(value *T) *MongORM[T] {
 // It accepts a schema Field, so nested fields are supported via field paths (for example:
 // `ToDoFields.User.Email` => `user.email`).
 func (m *MongORM[T]) SetData(field any, value any) *MongORM[T] {
-	fieldName := resolveFieldBSONName(field)
+	fieldName := m.resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -195,7 +199,7 @@ func (m *MongORM[T]) SetData(field any, value any) *MongORM[T] {
 // It accepts a schema Field, so nested fields are supported via field paths (for example:
 // `ToDoFields.User.Email` => `user.email`).
 func (m *MongORM[T]) UnsetData(field any) *MongORM[T] {
-	fieldName := resolveFieldBSONName(field)
+	fieldName := m.resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -250,7 +254,7 @@ func (m *MongORM[T]) IncData(field any, value any) *MongORM[T] {
 		return m
 	}
 
-	fieldName := resolveFieldBSONName(field)
+	fieldName := m.resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -309,7 +313,7 @@ func (m *MongORM[T]) PushData(field any, value any) *MongORM[T] {
 		return m
 	}
 
-	fieldName := resolveFieldBSONName(field)
+	fieldName := m.resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -363,7 +367,7 @@ func (m *MongORM[T]) AddToSetData(field any, value any) *MongORM[T] {
 		return m
 	}
 
-	fieldName := resolveFieldBSONName(field)
+	fieldName := m.resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -417,7 +421,7 @@ func (m *MongORM[T]) PullData(field any, value any) *MongORM[T] {
 		return m
 	}
 
-	fieldName := resolveFieldBSONName(field)
+	fieldName := m.resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
@@ -462,7 +466,7 @@ func (m *MongORM[T]) PopData(field any, value int) *MongORM[T] {
 		return m
 	}
 
-	fieldName := resolveFieldBSONName(field)
+	fieldName := m.resolveFieldBSONName(field)
 	if fieldName == "" {
 		return m
 	}
