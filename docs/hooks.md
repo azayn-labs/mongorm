@@ -23,14 +23,16 @@ MongORM provides a lifecycle hook system for every CRUD operation. Hooks are imp
 
 During `BeforeSave`, `BeforeUpdate`, and `BeforeCreate`, you can inspect changed fields:
 
-- `m.IsModified("field.path")`
-- `m.ModifiedFields()`
+- `m.IsModified(UserFields.Email)`
+- `m.IsModified(UserFields.Auth.Provider)`
+- `m.IsModified(mongorm.FieldPath(mongorm.RawField("devices"), "token"))`
+- `m.ModifiedFields()` (`[]mongorm.Field`)
 
 Nested paths are supported.
 
 ```go
 func (u *User) BeforeUpdate(m *mongorm.MongORM[User], filter *bson.M, update *bson.M) error {
-    if m.IsModified("profile.provider") {
+    if m.IsModified(UserFields.Auth.Provider) {
         // do something when nested provider changed
     }
     return nil
@@ -52,18 +54,33 @@ type User struct {
     Auth     *AuthProfile   `bson:"auth,omitempty"`
 }
 
+type AuthProfileSchema struct {
+    Provider *primitives.StringField
+    Scopes   *primitives.StringArrayField
+}
+
+type UserSchema struct {
+    ID       *primitives.ObjectIDField
+    Email    *primitives.StringField
+    Password *primitives.StringField
+    Auth     *AuthProfileSchema
+}
+
+var UserFields = mongorm.FieldsOf[User, UserSchema]()
+
 func (u *User) BeforeSave(m *mongorm.MongORM[User], filter *bson.M) error {
     // Works for both create (filter=nil) and update (filter!=nil)
-    if m.IsModified("password") {
+    if m.IsModified(UserFields.Password) {
         // hash password, rotate sessions, etc.
     }
 
-    if m.IsModified("auth.provider") || m.IsModified("auth.scopes") {
+    if m.IsModified(UserFields.Auth.Provider) || m.IsModified(UserFields.Auth.Scopes) {
         // re-sync OAuth metadata
     }
 
     // For arrays/slices of struct, check parent or deep path
-    if m.IsModified("devices") || m.IsModified("devices.token") {
+    devicesField := mongorm.RawField("devices")
+    if m.IsModified(devicesField) || m.IsModified(mongorm.FieldPath(devicesField, "token")) {
         // revoke old device tokens
     }
 
@@ -75,7 +92,7 @@ func (u *User) BeforeSave(m *mongorm.MongORM[User], filter *bson.M) error {
 }
 
 func (u *User) BeforeUpdate(m *mongorm.MongORM[User], filter *bson.M, update *bson.M) error {
-    if m.IsModified("email") {
+    if m.IsModified(UserFields.Email) {
         // verify new email / update search index
     }
 
@@ -83,7 +100,7 @@ func (u *User) BeforeUpdate(m *mongorm.MongORM[User], filter *bson.M, update *bs
 }
 ```
 
-With this model, changes like `auth.provider` match both `m.IsModified("auth.provider")` and `m.IsModified("auth")`.
+With this model, changes like `auth.provider` match both `m.IsModified(UserFields.Auth.Provider)` and `m.IsModified(mongorm.RawField("auth"))`.
 
 ## Implementation
 

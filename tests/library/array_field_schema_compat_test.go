@@ -34,7 +34,7 @@ func TestArraySchemaFieldCanBeUsedInPushData(t *testing.T) {
 	todoHistoryEntry := map[string]any{"id": "todo_123"}
 	m.PushData(todoCompatFields.History, todoHistoryEntry)
 
-	if !m.IsModified("history") {
+	if !m.IsModified(todoCompatFields.History) {
 		t.Fatal("expected history to be marked as modified after PushData")
 	}
 }

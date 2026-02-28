@@ -9,12 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func (m *MongORM[T]) IsModified(fieldPath string) bool {
+func (m *MongORM[T]) IsModified(field any) bool {
 	if m == nil || len(m.modified) == 0 {
 		return false
 	}
 
-	normalized := strings.TrimSpace(fieldPath)
+	normalized := strings.TrimSpace(resolveFieldBSONName(field))
 	if normalized == "" {
 		return false
 	}
@@ -32,13 +32,22 @@ func (m *MongORM[T]) IsModified(fieldPath string) bool {
 	return false
 }
 
-func (m *MongORM[T]) ModifiedFields() []string {
+func (m *MongORM[T]) ModifiedFields() []Field {
 	if m == nil || len(m.modified) == 0 {
-		return []string{}
+		return []Field{}
 	}
 
-	fields := slices.Collect(maps.Keys(m.modified))
-	slices.Sort(fields)
+	fieldNames := slices.Collect(maps.Keys(m.modified))
+	slices.Sort(fieldNames)
+
+	fields := make([]Field, 0, len(fieldNames))
+	for _, fieldName := range fieldNames {
+		field := RawField(fieldName)
+		if field != nil {
+			fields = append(fields, field)
+		}
+	}
+
 	return fields
 }
 

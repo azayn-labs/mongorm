@@ -50,7 +50,7 @@ func TestModifiedTracksSetField(t *testing.T) {
 	m := newTrackingORM()
 	m.Set(&trackingModel{Email: mongorm.String("john@example.com")})
 
-	if !m.IsModified("email") {
+	if !m.IsModified(TrackingFields.Email) {
 		t.Fatal("expected email to be marked as modified")
 	}
 }
@@ -59,11 +59,11 @@ func TestModifiedMatchesNestedPathWhenParentUpdated(t *testing.T) {
 	m := newTrackingORM()
 	m.Set(&trackingModel{Profile: &trackingProfile{Provider: mongorm.String("google")}})
 
-	if !m.IsModified("profile") {
+	if !m.IsModified(mongorm.RawField("profile")) {
 		t.Fatal("expected profile to be marked as modified")
 	}
 
-	if !m.IsModified("profile.provider") {
+	if !m.IsModified(TrackingFields.Profile.Provider) {
 		t.Fatal("expected nested profile.provider to be treated as modified when profile is updated")
 	}
 }
@@ -73,7 +73,13 @@ func TestModifiedFieldsSortedOutput(t *testing.T) {
 	m.SetData(mongorm.RawField("z"), 1)
 	m.SetData(mongorm.RawField("a"), 2)
 
-	if !reflect.DeepEqual(m.ModifiedFields(), []string{"a", "z"}) {
+	modified := m.ModifiedFields()
+	names := make([]string, 0, len(modified))
+	for _, field := range modified {
+		names = append(names, field.BSONName())
+	}
+
+	if !reflect.DeepEqual(names, []string{"a", "z"}) {
 		t.Fatal("expected sorted modified fields")
 	}
 }
@@ -82,15 +88,15 @@ func TestSetDataAndUnsetDataTrackNestedField(t *testing.T) {
 	m := newTrackingORM()
 
 	m.SetData(TrackingFields.Profile.Provider, "google")
-	if !m.IsModified("profile.provider") {
+	if !m.IsModified(TrackingFields.Profile.Provider) {
 		t.Fatal("expected profile.provider to be marked as modified")
 	}
-	if !m.IsModified("profile") {
+	if !m.IsModified(mongorm.RawField("profile")) {
 		t.Fatal("expected parent profile to be treated as modified")
 	}
 
 	m.UnsetData(TrackingFields.Profile.Provider)
-	if !m.IsModified("profile.provider") {
+	if !m.IsModified(TrackingFields.Profile.Provider) {
 		t.Fatal("expected unset nested field to remain marked as modified")
 	}
 }
@@ -103,7 +109,7 @@ func TestSetUnsetDataSkipPrimaryAndReadonly(t *testing.T) {
 	m.UnsetData(TrackingFields.ID)
 	m.UnsetData(TrackingFields.Secret)
 
-	if m.IsModified("_id") || m.IsModified("secret") {
+	if m.IsModified(TrackingFields.ID) || m.IsModified(TrackingFields.Secret) {
 		t.Fatal("expected protected fields not to be marked as modified")
 	}
 }
@@ -113,13 +119,13 @@ func TestSetUnsetDataSupportPositionalArrayPath(t *testing.T) {
 
 	setPath := mongorm.FieldPath(mongorm.PositionalFiltered(mongorm.RawField("items"), "item"), "name")
 	m.SetData(setPath, "updated-name")
-	if !m.IsModified("items.$[item].name") {
+	if !m.IsModified(setPath) {
 		t.Fatal("expected positional set path to be marked as modified")
 	}
 
 	unsetPath := mongorm.FieldPath(mongorm.Positional(mongorm.RawField("items")), "name")
 	m.UnsetData(unsetPath)
-	if !m.IsModified("items.$.name") {
+	if !m.IsModified(unsetPath) {
 		t.Fatal("expected positional unset path to be marked as modified")
 	}
 }
@@ -128,15 +134,15 @@ func TestIncAndDecrementDataTrackNestedField(t *testing.T) {
 	m := newTrackingORM()
 
 	m.IncData(TrackingFields.Profile.Provider, 1)
-	if !m.IsModified("profile.provider") {
+	if !m.IsModified(TrackingFields.Profile.Provider) {
 		t.Fatal("expected profile.provider to be marked as modified after inc")
 	}
-	if !m.IsModified("profile") {
+	if !m.IsModified(mongorm.RawField("profile")) {
 		t.Fatal("expected parent profile to be treated as modified after inc")
 	}
 
 	m.DecData(TrackingFields.Profile.Provider, 2)
-	if !m.IsModified("profile.provider") {
+	if !m.IsModified(TrackingFields.Profile.Provider) {
 		t.Fatal("expected profile.provider to stay marked as modified after decrement")
 	}
 }
@@ -149,7 +155,7 @@ func TestIncAndDecrementDataSkipPrimaryAndReadonly(t *testing.T) {
 	m.DecData(TrackingFields.ID, 1)
 	m.DecData(TrackingFields.Secret, 1)
 
-	if m.IsModified("_id") || m.IsModified("secret") {
+	if m.IsModified(TrackingFields.ID) || m.IsModified(TrackingFields.Secret) {
 		t.Fatal("expected protected fields not to be marked as modified")
 	}
 }
@@ -170,7 +176,7 @@ func TestArrayUpdateDataTrackFieldPaths(t *testing.T) {
 	m.PopFirstData(itemsPath)
 	m.PopLastData(itemsPath)
 
-	if !m.IsModified("items") {
+	if !m.IsModified(itemsPath) {
 		t.Fatal("expected items to be marked as modified by array update APIs")
 	}
 }
@@ -187,7 +193,7 @@ func TestArrayUpdateDataSkipPrimaryAndReadonly(t *testing.T) {
 	m.PopData(TrackingFields.ID, 1)
 	m.PopData(TrackingFields.Secret, -1)
 
-	if m.IsModified("_id") || m.IsModified("secret") {
+	if m.IsModified(TrackingFields.ID) || m.IsModified(TrackingFields.Secret) {
 		t.Fatal("expected protected fields not to be marked as modified")
 	}
 }
