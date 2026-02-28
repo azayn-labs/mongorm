@@ -7,45 +7,81 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-// applyTimestamps checks if the Timestamps option is enabled and, if so, it updates
-// the timestamp fields in the schema. It sets the created_at field if it is nil or zero,
-// and it always updates the updated_at field.
+// applyTimestampsToUpdateDoc injects timestamp fields only into the outgoing update
+// document right before update execution. It does not mutate schema fields.
 //
 // > NOTE: This method is internal only.
-func (m *MongORM[T]) applyTimestamps() {
+func (m *MongORM[T]) applyTimestampsToUpdateDoc(update *bson.M) {
 	if !m.options.Timestamps {
 		return
 	}
+	if update == nil {
+		return
+	}
 
-	v := reflect.ValueOf(m.schema).Elem()
 	now := time.Now()
 
-	if createdField, _, err := m.getFieldByTag(ModelTagTimestampCreatedAt); err == nil {
-		if f := v.FieldByName(createdField); f.IsValid() && f.CanSet() {
-			if tI, ok := f.Interface().(*time.Time); ok {
-				if tI == nil || tI.IsZero() {
-					f.Set(reflect.ValueOf(&now))
-				}
-			}
+	if _, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt); err == nil {
+		if (*update)["$set"] == nil {
+			(*update)["$set"] = bson.M{}
+		}
+
+		set, ok := (*update)["$set"].(bson.M)
+		if !ok || set == nil {
+			set = bson.M{}
+		}
+
+		set[updatedFieldName] = now
+		(*update)["$set"] = set
+	}
+}
+
+// documentForInsertWithTimestamps builds the outgoing insert document and injects
+// timestamp fields right before insert execution. It does not mutate schema fields.
+func (m *MongORM[T]) documentForInsertWithTimestamps() (bson.M, error) {
+	raw, err := bson.Marshal(m.schema)
+	if err != nil {
+		return nil, err
+	}
+
+	doc := bson.M{}
+	if err := bson.Unmarshal(raw, &doc); err != nil {
+		return nil, err
+	}
+
+	if !m.options.Timestamps {
+		return doc, nil
+	}
+
+	now := time.Now()
+
+	if _, createdFieldName, err := m.getFieldByTag(ModelTagTimestampCreatedAt); err == nil {
+		if !timestampFieldHasValue(doc[createdFieldName]) {
+			doc[createdFieldName] = now
 		}
 	}
 
-	if updatedField, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt); err == nil {
-		if f := v.FieldByName(updatedField); f.IsValid() && f.CanSet() {
-			f.Set(reflect.ValueOf(&now))
-			if m.operations.update["$set"] == nil {
-				if m.operations.update == nil {
-					m.operations.update = bson.M{}
-				}
+	if _, updatedFieldName, err := m.getFieldByTag(ModelTagTimestampUpdatedAt); err == nil {
+		doc[updatedFieldName] = now
+	}
 
-				m.operations.update["$set"] = bson.M{updatedFieldName: now}
-			} else {
-				set, ok := m.operations.update["$set"].(bson.M)
-				if ok {
-					set[updatedFieldName] = now
-				}
-			}
-		}
+	return doc, nil
+}
+
+func timestampFieldHasValue(value any) bool {
+	if value == nil {
+		return false
+	}
+
+	switch typed := value.(type) {
+	case time.Time:
+		return !typed.IsZero()
+	case *time.Time:
+		return typed != nil && !typed.IsZero()
+	case bson.DateTime:
+		return typed != 0
+	default:
+		return true
 	}
 }
 

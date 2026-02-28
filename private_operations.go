@@ -103,7 +103,12 @@ func (m *MongORM[T]) insertOne(ctx context.Context) error {
 		m.rebuildModifiedFromSchema()
 	}
 
-	ins, err := m.info.collection.InsertOne(ctx, m.schema)
+	insertDoc, err := m.documentForInsertWithTimestamps()
+	if err != nil {
+		return err
+	}
+
+	ins, err := m.info.collection.InsertOne(ctx, insertDoc)
 	if err != nil {
 		return normalizeError(err)
 	}
@@ -159,6 +164,10 @@ func (m *MongORM[T]) updateOne(
 		m.operations.fixUpdate()
 		m.rebuildModifiedFromUpdate(*update)
 	}
+
+	m.applyTimestampsToUpdateDoc(update)
+	m.operations.fixUpdate()
+	m.rebuildModifiedFromUpdate(*update)
 
 	if len(*update) == 0 {
 		return configErrorf("no update operations specified")

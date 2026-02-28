@@ -101,8 +101,6 @@ func (m *MongORM[T]) Save(
 	schema := any(m.schema)
 	hasExplicitUpdate := len(m.operations.update) > 0
 	m.clearModified()
-	m.applyTimestamps()
-	m.operations.fixUpdate()
 
 	filter, id, err := m.withPrimaryFilters()
 	if err != nil {
@@ -112,6 +110,7 @@ func (m *MongORM[T]) Save(
 	hasSelector := len(filter) > 0
 
 	if hasSelector && (hasExplicitUpdate || len(m.operations.query) > 0) {
+		m.operations.fixUpdate()
 		m.rebuildModifiedFromUpdate(m.operations.update)
 
 		if hook, ok := schema.(BeforeSaveHook[T]); ok {
@@ -159,7 +158,6 @@ func (m *MongORM[T]) Save(
 			return err
 		}
 	} else {
-		// Insert new document
 		if hook, ok := schema.(BeforeSaveHook[T]); ok {
 			if err := hook.BeforeSave(m, nil); err != nil {
 				return err
@@ -302,7 +300,6 @@ func (m *MongORM[T]) FindOneAndUpdate(
 	}
 
 	m.clearModified()
-	m.applyTimestamps()
 	m.operations.fixUpdate()
 
 	filter, id, err := m.withPrimaryAndSchemaFilters()
