@@ -27,6 +27,7 @@ During `BeforeSave`, `BeforeUpdate`, and `BeforeCreate`, you can inspect changed
 - `m.IsModified(UserFields.Auth.Provider)`
 - `m.IsModified(mongorm.FieldPath(mongorm.RawField("devices"), "token"))`
 - `m.ModifiedFields()` (`[]mongorm.Field`)
+- `m.ModifiedValue(UserFields.Email)` (`oldValue, newValue, ok`)
 
 Nested paths are supported.
 
@@ -87,6 +88,11 @@ func (u *User) BeforeSave(m *mongorm.MongORM[User], filter *bson.M) error {
     // Optional: inspect all changed paths
     changed := m.ModifiedFields()
     _ = changed
+
+    oldEmail, newEmail, emailChanged := m.ModifiedValue(UserFields.Email)
+    _ = oldEmail
+    _ = newEmail
+    _ = emailChanged
 
     return nil
 }

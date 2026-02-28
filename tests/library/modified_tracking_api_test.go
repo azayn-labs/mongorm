@@ -21,6 +21,7 @@ type trackingModel struct {
 	ID      *bson.ObjectID       `bson:"_id,omitempty" mongorm:"primary"`
 	Email   *string              `bson:"email,omitempty"`
 	Secret  *string              `bson:"secret,omitempty" mongorm:"readonly"`
+	Count   int64                `bson:"count,omitempty"`
 	Profile *trackingProfile     `bson:"profile,omitempty"`
 	Items   *[]trackingArrayItem `bson:"items,omitempty"`
 
@@ -37,6 +38,7 @@ type trackingModelSchema struct {
 	ID      *primitives.ObjectIDField
 	Email   *primitives.StringField
 	Secret  *primitives.StringField
+	Count   *primitives.Int64Field
 	Profile *trackingProfileSchema
 }
 
@@ -195,5 +197,59 @@ func TestArrayUpdateDataSkipPrimaryAndReadonly(t *testing.T) {
 
 	if m.IsModified(TrackingFields.ID) || m.IsModified(TrackingFields.Secret) {
 		t.Fatal("expected protected fields not to be marked as modified")
+	}
+}
+
+func TestModifiedValueForSetReturnsOldAndNew(t *testing.T) {
+	m := mongorm.New(&trackingModel{Email: mongorm.String("old@example.com")})
+	m.Set(&trackingModel{Email: mongorm.String("new@example.com")})
+
+	oldValue, newValue, ok := m.ModifiedValue(TrackingFields.Email)
+	if !ok {
+		t.Fatal("expected field to be reported as modified")
+	}
+
+	if oldValue != "old@example.com" {
+		t.Fatalf("expected old value old@example.com, got %v", oldValue)
+	}
+
+	if newValue != "new@example.com" {
+		t.Fatalf("expected new value new@example.com, got %v", newValue)
+	}
+}
+
+func TestModifiedValueForUnsetReturnsNilNewValue(t *testing.T) {
+	m := mongorm.New(&trackingModel{Email: mongorm.String("old@example.com")})
+	m.UnsetData(TrackingFields.Email)
+
+	oldValue, newValue, ok := m.ModifiedValue(TrackingFields.Email)
+	if !ok {
+		t.Fatal("expected field to be reported as modified")
+	}
+
+	if oldValue != "old@example.com" {
+		t.Fatalf("expected old value old@example.com, got %v", oldValue)
+	}
+
+	if newValue != nil {
+		t.Fatalf("expected new value nil for unset, got %v", newValue)
+	}
+}
+
+func TestModifiedValueForIncReturnsComputedNewValue(t *testing.T) {
+	m := mongorm.New(&trackingModel{Count: 10})
+	m.IncData(mongorm.RawField("count"), int64(5))
+
+	oldValue, newValue, ok := m.ModifiedValue(mongorm.RawField("count"))
+	if !ok {
+		t.Fatal("expected field to be reported as modified")
+	}
+
+	if oldValue != int64(10) {
+		t.Fatalf("expected old value 10, got %v", oldValue)
+	}
+
+	if newValue != float64(15) {
+		t.Fatalf("expected computed new value 15, got %v", newValue)
 	}
 }

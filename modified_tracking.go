@@ -51,6 +51,30 @@ func (m *MongORM[T]) ModifiedFields() []Field {
 	return fields
 }
 
+func (m *MongORM[T]) ModifiedValue(field any) (oldValue any, newValue any, ok bool) {
+	if m == nil {
+		return nil, nil, false
+	}
+
+	path := strings.TrimSpace(resolveFieldBSONName(field))
+	if path == "" {
+		return nil, nil, false
+	}
+
+	if _, changed := m.modified[path]; !changed {
+		return nil, nil, false
+	}
+
+	oldValue, _ = m.schemaValueByPath(path)
+	newValue, hasNew := m.modifiedNewValue(path, oldValue)
+
+	if !hasNew {
+		newValue = oldValue
+	}
+
+	return unwrapPointers(oldValue), unwrapPointers(newValue), true
+}
+
 func (m *MongORM[T]) clearModified() {
 	if m == nil {
 		return
@@ -129,6 +153,170 @@ func (m *MongORM[T]) rebuildModifiedFromSchema() {
 	}
 
 	collectModifiedSchemaFields(reflect.ValueOf(m.schema), "", m.markModified)
+}
+
+func (m *MongORM[T]) schemaValueByPath(path string) (any, bool) {
+	if m == nil || m.schema == nil {
+		return nil, false
+	}
+
+	parts := strings.Split(path, ".")
+	current := reflect.ValueOf(m.schema)
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			return nil, false
+		}
+
+		if part == "$" || part == "$[]" || strings.HasPrefix(part, "$[") {
+			return nil, false
+		}
+
+		current = dereferenceValue(current)
+		if !current.IsValid() {
+			return nil, false
+		}
+
+		switch current.Kind() {
+		case reflect.Struct:
+			fieldValue, found := findStructFieldByBSONName(current, part)
+			if !found {
+				return nil, false
+			}
+			current = fieldValue
+		case reflect.Map:
+			if current.Type().Key().Kind() != reflect.String {
+				return nil, false
+			}
+			entry := current.MapIndex(reflect.ValueOf(part))
+			if !entry.IsValid() {
+				return nil, false
+			}
+			current = entry
+		default:
+			return nil, false
+		}
+	}
+
+	current = dereferenceValue(current)
+	if !current.IsValid() {
+		return nil, false
+	}
+
+	return current.Interface(), true
+}
+
+func findStructFieldByBSONName(value reflect.Value, bsonName string) (reflect.Value, bool) {
+	t := value.Type()
+	for i := 0; i < t.NumField(); i++ {
+		fieldType := t.Field(i)
+		if fieldType.PkgPath != "" {
+			continue
+		}
+
+		name := parseBSONName(fieldType.Tag.Get("bson"), fieldType.Name)
+		if name != bsonName {
+			continue
+		}
+
+		return value.Field(i), true
+	}
+
+	return reflect.Value{}, false
+}
+
+func (m *MongORM[T]) modifiedNewValue(path string, oldValue any) (any, bool) {
+	if m == nil || m.operations == nil || m.operations.update == nil {
+		return nil, false
+	}
+
+	update := m.operations.update
+
+	if set, ok := update["$set"].(bson.M); ok {
+		if value, exists := set[path]; exists {
+			return value, true
+		}
+	}
+
+	if unset, ok := update["$unset"].(bson.M); ok {
+		if _, exists := unset[path]; exists {
+			return nil, true
+		}
+	}
+
+	if inc, ok := update["$inc"].(bson.M); ok {
+		if delta, exists := inc[path]; exists {
+			if value, computed := computeIncrementValue(oldValue, delta); computed {
+				return value, true
+			}
+			return delta, true
+		}
+	}
+
+	for _, op := range []string{"$push", "$addToSet", "$pull", "$pop"} {
+		doc, ok := update[op].(bson.M)
+		if !ok {
+			continue
+		}
+
+		if value, exists := doc[path]; exists {
+			return value, true
+		}
+	}
+
+	if value, exists := update[path]; exists {
+		return value, true
+	}
+
+	return nil, false
+}
+
+func computeIncrementValue(oldValue any, delta any) (any, bool) {
+	oldFloat, oldOk := asFloat64(oldValue)
+	deltaFloat, deltaOk := asFloat64(delta)
+	if !oldOk || !deltaOk {
+		return nil, false
+	}
+
+	return oldFloat + deltaFloat, true
+}
+
+func asFloat64(value any) (float64, bool) {
+	v := reflect.ValueOf(value)
+	if !v.IsValid() {
+		return 0, false
+	}
+
+	v = dereferenceValue(v)
+	if !v.IsValid() {
+		return 0, false
+	}
+
+	switch v.Kind() {
+	case reflect.Float32, reflect.Float64:
+		return v.Float(), true
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(v.Int()), true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return float64(v.Uint()), true
+	default:
+		return 0, false
+	}
+}
+
+func unwrapPointers(value any) any {
+	v := reflect.ValueOf(value)
+	if !v.IsValid() {
+		return nil
+	}
+
+	v = dereferenceValue(v)
+	if !v.IsValid() {
+		return nil
+	}
+
+	return v.Interface()
 }
 
 func collectModifiedSchemaFields(value reflect.Value, prefix string, mark func(string)) {
