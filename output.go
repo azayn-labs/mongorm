@@ -57,6 +57,23 @@ func (m *MongORM[T]) GetRawQuery() bson.M {
 	return cloneBSONMap(m.operations.query)
 }
 
+// GetResolvedRawQuery returns a debug copy of the effective query document used by
+// single-document find/update/delete operations. It includes accumulated query builder
+// filters and schema-derived selectors (such as primary key or non-zero/non-nil fields
+// on the current schema).
+func (m *MongORM[T]) GetResolvedRawQuery() (bson.M, error) {
+	if m == nil {
+		return bson.M{}, nil
+	}
+
+	query, _, err := m.withPrimaryAndSchemaFilters()
+	if err != nil {
+		return nil, err
+	}
+
+	return cloneBSONMap(query), nil
+}
+
 // GetRawUpdate returns a debug copy of the currently accumulated update document.
 // This is useful for logging and troubleshooting update builder state before execution.
 func (m *MongORM[T]) GetRawUpdate() bson.M {

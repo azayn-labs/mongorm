@@ -65,3 +65,27 @@ func TestGetRawUpdateReturnsCopy(t *testing.T) {
 		t.Fatalf("expected original count update value in internal update, got: %s", jsonUpdate)
 	}
 }
+
+func TestGetResolvedRawQueryIncludesSchemaFields(t *testing.T) {
+	done := false
+	model := mongorm.New(&ToDo{Text: mongorm.String("job-a")})
+	model.WhereBy(ToDoFields.Count, int64(7)).WhereBy(ToDoFields.Done, done)
+
+	resolved, err := model.GetResolvedRawQuery()
+	if err != nil {
+		t.Fatalf("expected resolved query without error, got: %v", err)
+	}
+
+	encoded, err := bson.MarshalExtJSON(resolved, true, false)
+	if err != nil {
+		t.Fatalf("expected resolved query to be encodable, got: %v", err)
+	}
+
+	jsonQuery := string(encoded)
+	if !strings.Contains(jsonQuery, "\"text\":\"job-a\"") {
+		t.Fatalf("expected schema field text to be present in resolved query, got: %s", jsonQuery)
+	}
+	if !strings.Contains(jsonQuery, "\"count\"") {
+		t.Fatalf("expected where field count to be present in resolved query, got: %s", jsonQuery)
+	}
+}
