@@ -100,6 +100,7 @@ func (m *MongORM[T]) insertOne(ctx context.Context) error {
 		if err := hook.BeforeCreate(m); err != nil {
 			return err
 		}
+		m.rebuildModifiedFromSchema()
 	}
 
 	ins, err := m.info.collection.InsertOne(ctx, m.schema)
@@ -155,6 +156,12 @@ func (m *MongORM[T]) updateOne(
 		if err := hook.BeforeUpdate(m, filter, update); err != nil {
 			return err
 		}
+		m.operations.fixUpdate()
+		m.rebuildModifiedFromUpdate(*update)
+	}
+
+	if len(*update) == 0 {
+		return configErrorf("no update operations specified")
 	}
 
 	if len(opts) == 0 {

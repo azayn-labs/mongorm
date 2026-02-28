@@ -71,6 +71,26 @@ func TestMain(t *testing.T) {
 		UpdateLibraryTodoCountWithIncAndDecrement(t)
 	})
 
+	t.Run("BeforeSave hook can add updates", func(t *testing.T) {
+		TestBeforeSaveCanAddUpdateOperations(t)
+	})
+
+	t.Run("BeforeCreate hook recalculates modified", func(t *testing.T) {
+		TestBeforeCreateRebuildsModifiedAfterHook(t)
+	})
+
+	t.Run("BeforeUpdate hook recalculates modified", func(t *testing.T) {
+		TestBeforeUpdateRebuildsModifiedAfterHook(t)
+	})
+
+	t.Run("BeforeFind hook can mutate filter", func(t *testing.T) {
+		TestBeforeFindCanMutateFilter(t)
+	})
+
+	t.Run("BeforeDelete hook can mutate filter", func(t *testing.T) {
+		TestBeforeDeleteCanMutateFilter(t)
+	})
+
 	t.Run("FindOneAndUpdate returns not found", func(t *testing.T) {
 		UpdateLibraryTodoFindOneAndUpdateNotFound(t)
 	})

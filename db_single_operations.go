@@ -110,24 +110,28 @@ func (m *MongORM[T]) Save(
 	if hasExplicitUpdate || len(m.operations.query) > 0 {
 		m.rebuildModifiedFromUpdate(m.operations.update)
 
+		if hook, ok := schema.(BeforeSaveHook[T]); ok {
+			if err := hook.BeforeSave(m, &filter); err != nil {
+				return err
+			}
+
+			// Re-normalize updates only when hook mutations may have happened.
+			m.operations.fixUpdate()
+			m.rebuildModifiedFromUpdate(m.operations.update)
+		}
+
 		optimisticLockEnabled := false
 		if id != nil {
 			optimisticLockEnabled, err = m.applyOptimisticLock(&filter, &m.operations.update)
 			if err != nil {
 				return err
 			}
+			m.operations.fixUpdate()
 			m.rebuildModifiedFromUpdate(m.operations.update)
 		}
 
 		if len(m.operations.update) == 0 {
 			return configErrorf("no update operations specified")
-		}
-
-		// Update existing document
-		if hook, ok := schema.(BeforeSaveHook[T]); ok {
-			if err := hook.BeforeSave(m, &filter); err != nil {
-				return err
-			}
 		}
 
 		// Set upsert to true as its to be exepected on a save to create a document if not exists.
