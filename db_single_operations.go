@@ -130,6 +130,15 @@ func (m *MongORM[T]) Save(
 			}
 		}
 
+		// Set upsert to true as its to be exepected on a save to create a document if not exists.
+		if len(opts) == 0 {
+			opts = []options.Lister[options.FindOneAndUpdateOptions]{
+				options.FindOneAndUpdate().SetUpsert(true),
+			}
+		} else {
+			opts = append(opts, options.FindOneAndUpdate().SetUpsert(true))
+		}
+
 		if err := m.updateOne(
 			ctx,
 			&filter,
