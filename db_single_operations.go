@@ -160,6 +160,10 @@ func (m *MongORM[T]) Save(
 			if err := hook.BeforeSave(m, nil); err != nil {
 				return err
 			}
+
+			// Re-normalize updates only when hook mutations may have happened.
+			m.operations.fixUpdate()
+			m.rebuildModifiedFromUpdate(m.operations.update)
 		}
 
 		if err := m.insertOne(ctx); err != nil {
