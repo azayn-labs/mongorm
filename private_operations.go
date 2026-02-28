@@ -353,3 +353,77 @@ func (m *MongORM[T]) withPrimaryFilters() (bson.M, *bson.ObjectID, error) {
 	return filters, &id, nil
 
 }
+
+func (m *MongORM[T]) withPrimaryAndSchemaFilters() (bson.M, *bson.ObjectID, error) {
+	filters, id, err := m.withPrimaryFilters()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	schemaFilters, err := m.schemaQueryFilters()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for key, value := range schemaFilters {
+		if _, exists := filters[key]; exists {
+			continue
+		}
+		filters[key] = value
+	}
+
+	return filters, id, nil
+}
+
+func (m *MongORM[T]) schemaQueryFilters() (bson.M, error) {
+	filters := bson.M{}
+	if m == nil || m.schema == nil {
+		return filters, nil
+	}
+
+	primaryFieldGoName, _, err := m.getFieldByTag(ModelTagPrimary)
+	if err != nil {
+		return nil, err
+	}
+
+	v := reflect.ValueOf(m.schema)
+	if !v.IsValid() || v.Kind() != reflect.Pointer || v.IsNil() {
+		return filters, nil
+	}
+
+	value := v.Elem()
+	typeOfModel := value.Type()
+
+	for i := 0; i < typeOfModel.NumField(); i++ {
+		fieldType := typeOfModel.Field(i)
+		if fieldType.PkgPath != "" || fieldType.Name == primaryFieldGoName {
+			continue
+		}
+
+		bsonName := parseBSONName(fieldType.Tag.Get("bson"), fieldType.Name)
+		if bsonName == "" || bsonName == "-" {
+			continue
+		}
+
+		fieldValue := value.Field(i)
+		if !fieldValue.IsValid() {
+			continue
+		}
+
+		if fieldValue.Kind() == reflect.Pointer {
+			if fieldValue.IsNil() {
+				continue
+			}
+			filters[bsonName] = fieldValue.Interface()
+			continue
+		}
+
+		if fieldValue.IsZero() {
+			continue
+		}
+
+		filters[bsonName] = fieldValue.Interface()
+	}
+
+	return filters, nil
+}

@@ -61,7 +61,7 @@ func (m *MongORM[T]) First(
 		return err
 	}
 
-	filter, _, err := m.withPrimaryFilters()
+	filter, _, err := m.withPrimaryAndSchemaFilters()
 	if err != nil {
 		return err
 	}
@@ -303,7 +303,7 @@ func (m *MongORM[T]) FindOneAndUpdate(
 	m.applyTimestamps()
 	m.operations.fixUpdate()
 
-	filter, id, err := m.withPrimaryFilters()
+	filter, id, err := m.withPrimaryAndSchemaFilters()
 	if err != nil {
 		return err
 	}
@@ -366,7 +366,7 @@ func (m *MongORM[T]) Delete(
 		return err
 	}
 
-	filter, _, err := m.withPrimaryFilters()
+	filter, _, err := m.withPrimaryAndSchemaFilters()
 	if err != nil {
 		return err
 	}

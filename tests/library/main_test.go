@@ -99,6 +99,10 @@ func TestMain(t *testing.T) {
 		UpdateLibraryTodoFindOneAndUpdateNotFound(t)
 	})
 
+	t.Run("FindOneAndUpdate merges schema and where filters", func(t *testing.T) {
+		TestFindOneAndUpdateMergesSchemaAndWhereFilters(t)
+	})
+
 	t.Run("Delete TODO by ID", func(t *testing.T) {
 		DeleteLibraryTodoByID(t, toDo.ID)
 	})
