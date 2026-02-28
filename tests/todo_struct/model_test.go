@@ -61,9 +61,9 @@ func (t *ToDo) AfterFind(m *mongorm.MongORM[ToDo]) error {
 	return nil
 }
 
-func (t *ToDo) BeforeSave(m *mongorm.MongORM[ToDo], id *bson.ObjectID, query *bson.M) error {
-	if id != nil {
-		fmt.Printf("[HOOK] before saving a document with ID %+v and query %+v\n", id.Hex(), *query)
+func (t *ToDo) BeforeSave(m *mongorm.MongORM[ToDo], query *bson.M) error {
+	if query != nil {
+		fmt.Printf("[HOOK] before saving a document with query %+v\n", *query)
 	} else {
 		fmt.Println("[HOOK] before saving a new document")
 	}
