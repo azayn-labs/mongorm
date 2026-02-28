@@ -1,34 +1,27 @@
 package mongorm
 
 import (
-	"encoding/json"
 	"reflect"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-// clonePtr creates a deep copy of the provided struct pointer using JSON marshaling and
-// unmarshaling. If the reset parameter is true, it returns a pointer to a zero-value instance
-// of the struct. This function is useful for creating new instances of the schema or MongORM
-// struct without copying the existing data.
+// clonePtr creates a copy of the provided pointer target by value. If reset is true,
+// it returns a pointer to a zero-value instance of T.
 //
 // > NOTE: This function is internal only.
 func clonePtr[T any](src *T, reset bool) *T {
-	b, err := json.Marshal(src)
-	if err != nil {
-		return nil
-	}
-
-	var dst T
-	if err := json.Unmarshal(b, &dst); err != nil {
-		return nil
-	}
-
 	if reset {
 		var zero T
 		return &zero
 	}
+
+	if src == nil {
+		return nil
+	}
+
+	dst := *src
 
 	return &dst
 }

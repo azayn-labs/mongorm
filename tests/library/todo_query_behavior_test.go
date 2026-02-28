@@ -184,6 +184,17 @@ func FindAllLibraryTodoByText(t *testing.T, text string) {
 	if first.Document() == nil || first.Document().Text == nil || *first.Document().Text != text {
 		t.Fatal("expected first cursor document with requested text")
 	}
+	if first.Document().ID == nil {
+		t.Fatal("expected first cursor document id")
+	}
+
+	count, err := first.WhereBy(ToDoFields.ID, *first.Document().ID).Count(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("expected cloned cursor model count to be 1 by id, got %d", count)
+	}
 
 	if cursor.Next(t.Context()) {
 		t.Fatal("expected cursor to be exhausted on second Next")

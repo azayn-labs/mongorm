@@ -138,13 +138,15 @@ func (m *MongORM[T]) Save(
 			return configErrorf("no update operations specified")
 		}
 
-		// Set upsert to true as its to be exepected on a save to create a document if not exists.
+		// Save keeps upsert behavior by default, but must disable upsert when
+		// optimistic locking is active to avoid stale-version inserts.
+		upsertEnabled := !optimisticLockEnabled
 		if len(opts) == 0 {
 			opts = []options.Lister[options.FindOneAndUpdateOptions]{
-				options.FindOneAndUpdate().SetUpsert(true),
+				options.FindOneAndUpdate().SetUpsert(upsertEnabled),
 			}
 		} else {
-			opts = append(opts, options.FindOneAndUpdate().SetUpsert(true))
+			opts = append(opts, options.FindOneAndUpdate().SetUpsert(upsertEnabled))
 		}
 
 		if err := m.updateOne(

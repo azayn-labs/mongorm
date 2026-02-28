@@ -1,6 +1,10 @@
 package mongorm
 
-import "go.mongodb.org/mongo-driver/v2/bson"
+import (
+	"maps"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
 
 func (m *MongORM[T]) ensureReady() error {
 	if m == nil {
@@ -24,13 +28,23 @@ func (m *MongORM[T]) ensureReady() error {
 //
 // > NOTE: This method is not intended for public use.
 func (m *MongORM[T]) clone() *MongORM[T] {
-	p := clonePtr(m, false)
-	p.schema = clonePtr(m.schema, true)
-	p.operations = &MongORMOperations{
-		query:  bson.M{},
-		update: bson.M{},
+	if m == nil {
+		return nil
 	}
-	p.modified = map[string]struct{}{}
+
+	p := &MongORM[T]{
+		schema:     clonePtr(m.schema, false),
+		options:    clonePtr(m.options, false),
+		info:       clonePtr(m.info, false),
+		operations: &MongORMOperations{query: bson.M{}, update: bson.M{}},
+		modified:   map[string]struct{}{},
+		initErr:    m.initErr,
+	}
+
+	if p.info != nil && m.info != nil && m.info.fields != nil {
+		p.info.fields = make(map[string]Field, len(m.info.fields))
+		maps.Copy(p.info.fields, m.info.fields)
+	}
 
 	return p
 }
