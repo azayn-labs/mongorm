@@ -1,10 +1,10 @@
 # Updating Documents
 
-MongORM supports robust MongoDB update workflows for both **single** and **multiple** documents. Use `Save()` / `Update()` for focused writes and `SaveMulti()` for efficient batch-style updates with the same fluent, type-safe developer experience.
+MongORM supports robust MongoDB update workflows for both **single** and **multiple** documents. Use `Save()` or `FindOneAndUpdate()` for focused writes and `SaveMulti()` for efficient batch-style updates with the same fluent, type-safe developer experience.
 
 ## Update a Single Document
 
-Use `Where()` to filter to the target document, `Set()` to specify which fields to change, then call `Save()` or `Update()`.
+Use `Where()` to filter to the target document, `Set()` to specify which fields to change, then call `Save()`.
 
 ```go
 package main
@@ -55,14 +55,6 @@ func main() {
 }
 ```
 
-`Update()` is an alias for `Save()` and behaves identically:
-
-```go
-if err := orm.Update(ctx); err != nil {
-    panic(err)
-}
-```
-
 ## FindOneAndUpdate (No Upsert)
 
 Use `FindOneAndUpdate()` when you want strict update-only behavior.
@@ -110,8 +102,8 @@ This is especially useful for dynamic updates or deep nested fields where buildi
 
 ## Increment / Decrement Numeric Fields
 
-Use `IncData(field, value)` (or alias `IncrementData`) for MongoDB `$inc` updates.
-Use `DecData(field, amount)` (or alias `DecrementData`) for decrement operations.
+Use `IncData(field, value)` for MongoDB `$inc` updates.
+Use `DecData(field, amount)` for decrement operations.
 
 ```go
 orm.
@@ -255,7 +247,7 @@ Available helpers:
 
 ## Empty Update Guard
 
-For single-document updates (`Save()` / `Update()`), MongORM returns an explicit configuration error when no update operators are present.
+For single-document updates (`Save()` / `FindOneAndUpdate()`), MongORM returns an explicit configuration error when no update operators are present.
 
 This can happen if you target an existing document (for example via `Where()` or primary key) but do not call `Set()` / `Unset()` and no automatic `UpdatedAt` field is available.
 
@@ -291,13 +283,13 @@ result, err := orm.SaveMulti(ctx)
 
 ## With Timestamps
 
-If timestamps are enabled, `UpdatedAt` is automatically set to `time.Now()` on every `Save()` / `Update()` call. `CreatedAt` is never modified after the initial insert.
+If timestamps are enabled, `UpdatedAt` is automatically set to `time.Now()` on every `Save()` / `FindOneAndUpdate()` call. `CreatedAt` is never modified after the initial insert.
 
 See [Timestamps](./timestamps.md) for more details.
 
 ## Upsert Behaviour
 
-`Save()` (and `Update()`) performs an **upsert**:
+`Save()` performs an **upsert**:
 
 - If a matching document is found (via `Where()` filters or a set primary key), it is updated.
 - If no matching document exists and no filter is set, a new document is inserted.
@@ -319,7 +311,7 @@ type ToDo struct {
 Behavior:
 
 - On insert, if `_version` is unset, nil, or `<= 0`, MongORM initializes it to `1`. If you provide a positive `_version` value explicitly, that value is preserved.
-- On update (`Save()` / `Update()`), MongORM matches by current `_version` and increments it atomically.
+- On update (`Save()` / `FindOneAndUpdate()`), MongORM matches by current `_version` and increments it atomically.
 - If the version is stale, update fails with `ErrOptimisticLockConflict`.
 
 ---

@@ -46,16 +46,12 @@ func newTrackingORM() *mongorm.MongORM[trackingModel] {
 	return mongorm.New(&trackingModel{})
 }
 
-func TestModifiedTracksSetFieldAndAlias(t *testing.T) {
+func TestModifiedTracksSetField(t *testing.T) {
 	m := newTrackingORM()
 	m.Set(&trackingModel{Email: mongorm.String("john@example.com")})
 
 	if !m.IsModified("email") {
 		t.Fatal("expected email to be marked as modified")
-	}
-
-	if !m.IsModifed("email") {
-		t.Fatal("expected IsModifed alias to return true")
 	}
 }
 

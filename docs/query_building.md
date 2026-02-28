@@ -192,8 +192,8 @@ For keyset pagination, use `After()` / `Before()` or the convenience methods `Pa
 
 ```go
 // low-level keyset filters
-orm.After(ToDoFields.Count, int64(100)).PageSize(20)
-orm.Before(ToDoFields.Count, int64(200)).PageSize(20)
+orm.After(ToDoFields.Count, int64(100)).Limit(20)
+orm.Before(ToDoFields.Count, int64(200)).Limit(20)
 ```
 
 ```go

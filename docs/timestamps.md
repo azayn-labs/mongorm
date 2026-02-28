@@ -1,6 +1,6 @@
 # Timestamps
 
-MongORM can automatically manage `CreatedAt` and `UpdatedAt` fields for you. When enabled, `CreatedAt` is set once on the first insert, and `UpdatedAt` is updated to `time.Now()` on every `Save()` / `Update()` call.
+MongORM can automatically manage `CreatedAt` and `UpdatedAt` fields for you. When enabled, `CreatedAt` is set once on the first insert, and `UpdatedAt` is updated to `time.Now()` on every `Save()` / `FindOneAndUpdate()` call.
 
 ## Enable Timestamps
 
@@ -50,7 +50,7 @@ orm := mongorm.FromOptions(&ToDo{}, opts)
 If your model defines only one timestamp field, MongORM manages that field independently:
 
 - only `timestamp:created_at` → `CreatedAt` is set on insert and not changed afterwards.
-- only `timestamp:updated_at` → `UpdatedAt` is refreshed on each `Save()` / `Update()`.
+- only `timestamp:updated_at` → `UpdatedAt` is refreshed on each `Save()` / `FindOneAndUpdate()`.
 
 ## Field Requirements
 

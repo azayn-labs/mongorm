@@ -24,7 +24,6 @@ MongORM provides a lifecycle hook system for every CRUD operation. Hooks are imp
 During `BeforeSave`, `BeforeUpdate`, and `BeforeCreate`, you can inspect changed fields:
 
 - `m.IsModified("field.path")`
-- `m.IsModifed("field.path")` (compatibility alias)
 - `m.ModifiedFields()`
 
 Nested paths are supported.

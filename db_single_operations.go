@@ -172,26 +172,6 @@ func (m *MongORM[T]) Save(
 	return nil
 }
 
-// Update is an alias for the Save method, providing a more intuitive name for updating
-// an existing document. It performs the same upsert operation as Save, checking for the
-// existence of the document and either updating it or inserting a new one. The method also
-// applies any necessary timestamps and executes any defined hooks before and after the
-// update operation. It returns an error if the operation fails.
-//
-// Example usage:
-//
-//	err := mongormInstance.Update(ctx)
-//	if err != nil {
-//	    // Handle error
-//	} else {
-//	    // Document updated successfully
-//	}
-func (m *MongORM[T]) Update(
-	ctx context.Context,
-) error {
-	return m.Save(ctx)
-}
-
 // FindOneAndUpdate updates a single existing document that matches the current
 // query criteria and decodes the updated document back into the schema.
 //

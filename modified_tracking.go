@@ -32,11 +32,6 @@ func (m *MongORM[T]) IsModified(fieldPath string) bool {
 	return false
 }
 
-// IsModifed is kept as a compatibility alias for IsModified.
-func (m *MongORM[T]) IsModifed(fieldPath string) bool {
-	return m.IsModified(fieldPath)
-}
-
 func (m *MongORM[T]) ModifiedFields() []string {
 	if m == nil || len(m.modified) == 0 {
 		return []string{}
