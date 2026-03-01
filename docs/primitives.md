@@ -16,6 +16,7 @@ import "github.com/azayn-labs/mongorm/primitives"
 | `StringField` | `string` | Text fields |
 | `Int64Field` | `int64` | Integer numeric fields (also handles int32, int8, int) |
 | `Float64Field` | `float64` | Floating-point fields (also handles float32) |
+| `Decimal128Field` | `bson.Decimal128` | High-precision decimal fields |
 | `BoolField` | `bool` | Boolean fields |
 | `StringArrayField` | `[]string` | Arrays/slices of strings (also handles `*[]string`) |
 | `TimestampField` | `time.Time` | Date/time fields |
@@ -139,6 +140,36 @@ Handles `float64` and `float32` model fields.
 
 ```go
 orm.Where(ProductFields.Price.Lt(99.99))
+```
+
+---
+
+## Decimal128Field
+
+**Package:** `primitives.Decimal128Field`
+
+Handles `bson.Decimal128` model fields.
+
+### Decimal128 Methods
+
+| Method | MongoDB operator | Description |
+| --- | --- | --- |
+| `Eq(v bson.Decimal128)` | `$eq` | Equals |
+| `Ne(v bson.Decimal128)` | `$ne` | Not equals |
+| `In(v []bson.Decimal128)` | `$in` | In a list |
+| `Nin(v []bson.Decimal128)` | `$nin` | Not in a list |
+| `Gt(v bson.Decimal128)` | `$gt` | Greater than |
+| `Gte(v bson.Decimal128)` | `$gte` | Greater than or equal |
+| `Lt(v bson.Decimal128)` | `$lt` | Less than |
+| `Lte(v bson.Decimal128)` | `$lte` | Less than or equal |
+| `Exists()` | `$exists: true` | Field exists |
+| `NotExists()` | `$exists: false` | Field does not exist |
+| `IsNull()` | `$eq: null` | Field is null |
+| `IsNotNull()` | `$ne: null` | Field is not null |
+
+```go
+amount, _ := bson.ParseDecimal128("10.50")
+orm.Where(ProductFields.Amount.Gte(amount))
 ```
 
 ---

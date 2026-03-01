@@ -80,6 +80,25 @@ price := mongorm.Float64Val(product.Price) // 19.99
 nilPrice := mongorm.Float64Val(nil)        // 0
 ```
 
+### Decimal128 / Decimal128Val
+
+```go
+func Decimal128(d bson.Decimal128) *bson.Decimal128
+func Decimal128Val(d *bson.Decimal128) bson.Decimal128
+```
+
+Create a `*bson.Decimal128` or safely read its value (returns zero `bson.Decimal128{}` for nil).
+
+```go
+amount, err := bson.ParseDecimal128("123.45")
+if err != nil {
+    panic(err)
+}
+
+invoice := &Invoice{Amount: mongorm.Decimal128(amount)}
+amountValue := mongorm.Decimal128Val(invoice.Amount)
+```
+
 ### Timestamp / TimestampVal
 
 ```go
@@ -108,6 +127,7 @@ nilDue := mongorm.TimestampVal(nil)       // time.Time{} zero value
 | `Bool(b bool) *bool` | `BoolVal(b *bool) bool` | `false` |
 | `Int64(i int64) *int64` | `Int64Val(i *int64) int64` | `0` |
 | `Float64(f float64) *float64` | `Float64Val(f *float64) float64` | `0` |
+| `Decimal128(d bson.Decimal128) *bson.Decimal128` | `Decimal128Val(d *bson.Decimal128) bson.Decimal128` | `bson.Decimal128{}` |
 | `Timestamp(t time.Time) *time.Time` | `TimestampVal(t *time.Time) time.Time` | `time.Time{}` |
 
 ## Model Output Helpers

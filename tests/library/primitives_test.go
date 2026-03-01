@@ -39,6 +39,16 @@ func ValidatePrimitiveQueries(t *testing.T) {
 		t.Fatal("unexpected Float64 Lte query")
 	}
 
+	amount, err := bson.ParseDecimal128("12.34")
+	if err != nil {
+		t.Fatalf("failed to parse decimal128: %v", err)
+	}
+
+	decimal := primitives.Decimal128Type("amount")
+	if !reflect.DeepEqual(decimal.Gte(amount), bson.M{"amount": bson.M{"$gte": amount}}) {
+		t.Fatal("unexpected Decimal128 Gte query")
+	}
+
 	id := primitives.ObjectIDType("_id")
 	oid := bson.NewObjectID()
 	if !reflect.DeepEqual(id.Eq(oid), bson.M{"_id": oid}) {

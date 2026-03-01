@@ -1,6 +1,10 @@
 package mongorm
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
 
 // Utility functions for working with pointers to basic types. These functions are used to
 // create pointers to values of basic types (e.g., string, int, bool) and to retrieve the
@@ -148,6 +152,21 @@ func Float64Val(f *float64) float64 {
 		return 0
 	}
 	return *f
+}
+
+// Decimal128 creates a pointer to a bson.Decimal128 value.
+func Decimal128(d bson.Decimal128) *bson.Decimal128 {
+	return &d
+}
+
+// Decimal128Val retrieves the value from a pointer to a bson.Decimal128. If the pointer is nil,
+// it returns the zero value of bson.Decimal128.
+func Decimal128Val(d *bson.Decimal128) bson.Decimal128 {
+	if d == nil {
+		return bson.Decimal128{}
+	}
+
+	return *d
 }
 
 // Timestamp creates a pointer to a time.Time value. This function is useful for creating

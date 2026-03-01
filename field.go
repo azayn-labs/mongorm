@@ -98,11 +98,18 @@ func NewFieldFromType(t reflect.Type, name string) Field {
 		if t == reflect.TypeOf(bson.ObjectID{}) {
 			return primitives.ObjectIDType(name)
 		}
+
+		if t == reflect.TypeOf(bson.Decimal128{}) {
+			return primitives.Decimal128Type(name)
+		}
 	}
 
 	switch t.Name() {
 	case "ObjectID":
 		return primitives.ObjectIDType(name)
+
+	case "Decimal128":
+		return primitives.Decimal128Type(name)
 
 	case "Time":
 		return primitives.TimestampType(name)
@@ -220,6 +227,8 @@ func NewFieldFromSchemaType(t reflect.Type, name string) (Field, bool) {
 		return primitives.Int64Type(name), true
 	case reflect.TypeOf(primitives.Float64Field{}):
 		return primitives.Float64Type(name), true
+	case reflect.TypeOf(primitives.Decimal128Field{}):
+		return primitives.Decimal128Type(name), true
 	case reflect.TypeOf(primitives.BoolField{}):
 		return primitives.BoolType(name), true
 	case reflect.TypeOf(primitives.ObjectIDField{}):
@@ -238,6 +247,8 @@ func NewFieldFromSchemaType(t reflect.Type, name string) (Field, bool) {
 		return primitives.Int64Type(name), true
 	case reflect.TypeOf((*primitives.Float64Field)(nil)):
 		return primitives.Float64Type(name), true
+	case reflect.TypeOf((*primitives.Decimal128Field)(nil)):
+		return primitives.Decimal128Type(name), true
 	case reflect.TypeOf((*primitives.BoolField)(nil)):
 		return primitives.BoolType(name), true
 	case reflect.TypeOf((*primitives.ObjectIDField)(nil)):
@@ -309,8 +320,12 @@ func isNativePrimitiveStruct(t reflect.Type) bool {
 		return true
 	}
 
+	if t == reflect.TypeOf(bson.Decimal128{}) {
+		return true
+	}
+
 	switch t.Name() {
-	case "Time", "GeoPoint", "GeoLineString", "GeoPolygon":
+	case "Time", "GeoPoint", "GeoLineString", "GeoPolygon", "Decimal128":
 		return true
 	}
 

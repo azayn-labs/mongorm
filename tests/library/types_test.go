@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/azayn-labs/mongorm"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func ValidateTypesHelpers(t *testing.T) {
@@ -60,6 +61,24 @@ func ValidateTypesHelpers(t *testing.T) {
 
 	if v := mongorm.Float64Val(nil); v != 0 {
 		t.Fatal("expected 0 for nil float64 pointer")
+	}
+
+	amount, err := bson.ParseDecimal128("123.45")
+	if err != nil {
+		t.Fatalf("failed to parse decimal128: %v", err)
+	}
+
+	amountPtr := mongorm.Decimal128(amount)
+	if amountPtr == nil || *amountPtr != amount {
+		t.Fatal("failed creating decimal128 pointer")
+	}
+
+	if v := mongorm.Decimal128Val(amountPtr); v != amount {
+		t.Fatal("failed reading decimal128 pointer")
+	}
+
+	if v := mongorm.Decimal128Val(nil); v != (bson.Decimal128{}) {
+		t.Fatal("expected zero decimal128 for nil pointer")
 	}
 
 	now := time.Now().UTC().Truncate(time.Millisecond)
