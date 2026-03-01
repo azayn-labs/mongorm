@@ -206,6 +206,12 @@ func (m *MongORM[T]) applyUpdateOpsToSchemaForInsert() error {
 		}
 	}
 
+	if setOnInsertDoc, ok := m.operations.update["$setOnInsert"].(bson.M); ok {
+		for path, value := range setOnInsertDoc {
+			setBSONPathValue(doc, path, value)
+		}
+	}
+
 	if unsetDoc, ok := m.operations.update["$unset"].(bson.M); ok {
 		for path := range unsetDoc {
 			deleteBSONPathValue(doc, path)

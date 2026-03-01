@@ -22,6 +22,14 @@ func TestStrictFilterAndUpdateBuildersFromFields(t *testing.T) {
 		t.Fatalf("unexpected set update: %#v", update)
 	}
 
+	setOnInsert := mongorm.SetOnInsertUpdateFromPairs(
+		mongorm.FieldValuePair{Field: ToDoFields.Text, Value: "x@example.com"},
+		mongorm.FieldValuePair{Field: ToDoFields.User.Auth.Provider, Value: "google"},
+	)
+	if !reflect.DeepEqual(setOnInsert, bson.M{"$setOnInsert": bson.M{"text": "x@example.com", "user.auth.provider": "google"}}) {
+		t.Fatalf("unexpected setOnInsert update: %#v", setOnInsert)
+	}
+
 	unset := mongorm.UnsetUpdateFromFields(ToDoFields.User.Auth.Provider)
 	if !reflect.DeepEqual(unset, bson.M{"$unset": bson.M{"user.auth.provider": 1}}) {
 		t.Fatalf("unexpected unset update: %#v", unset)
@@ -77,5 +85,21 @@ func TestAddToSetDataAcceptsField(t *testing.T) {
 	jsonUpdate := string(encoded)
 	if jsonUpdate != "{\"$addToSet\":{\"tags\":\"vip\"}}" {
 		t.Fatalf("unexpected addToSet update from field: %s", jsonUpdate)
+	}
+}
+
+func TestSetOnInsertDataAcceptsField(t *testing.T) {
+	model := mongorm.New(&ToDo{})
+	model.SetOnInsertData(ToDoFields.Text, "only-on-insert")
+
+	rawUpdate := model.GetRawUpdate()
+	encoded, err := bson.MarshalExtJSON(rawUpdate, true, false)
+	if err != nil {
+		t.Fatalf("expected update to be encodable, got: %v", err)
+	}
+
+	jsonUpdate := string(encoded)
+	if jsonUpdate != "{\"$setOnInsert\":{\"text\":\"only-on-insert\"}}" {
+		t.Fatalf("unexpected setOnInsert update from field: %s", jsonUpdate)
 	}
 }

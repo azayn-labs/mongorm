@@ -100,6 +100,37 @@ orm.SetData(ToDoFields.User.Email, "john@example.com") // nested path
 
 This is especially useful for dynamic updates or deep nested fields where building a partial struct is cumbersome.
 
+## Set Fields Only When Upsert Inserts
+
+Use `SetOnInsert()` to write defaults only when an upsert creates a new document.
+
+```go
+orm.
+    WhereBy(ToDoFields.Text, "task-123").
+    SetOnInsert(&ToDo{
+        Text:  mongorm.String("task-123"),
+        Done:  mongorm.Bool(false),
+        Count: 1,
+    }).
+    Save(ctx)
+```
+
+For direct field paths, use `SetOnInsertData(field, value)`:
+
+```go
+orm.SetOnInsertData(ToDoFields.Text, "task-123")
+orm.SetOnInsertData(ToDoFields.User.Email, "john@example.com")
+```
+
+For strict field-only bulk update docs, use `SetOnInsertUpdateFromPairs(...)`:
+
+```go
+update := mongorm.SetOnInsertUpdateFromPairs(
+    mongorm.FieldValuePair{Field: ToDoFields.Text, Value: "task-123"},
+    mongorm.FieldValuePair{Field: ToDoFields.Done, Value: false},
+)
+```
+
 ## Increment / Decrement Numeric Fields
 
 Use `IncData(field, value)` for MongoDB `$inc` updates.

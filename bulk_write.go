@@ -92,6 +92,23 @@ func SetUpdateFromPairs(pairs ...FieldValuePair) bson.M {
 	return bson.M{"$set": set}
 }
 
+// SetOnInsertUpdateFromPairs builds an update document with $setOnInsert using schema fields.
+func SetOnInsertUpdateFromPairs(pairs ...FieldValuePair) bson.M {
+	setOnInsert := bson.M{}
+	for _, pair := range pairs {
+		if pair.Field == nil {
+			continue
+		}
+		setOnInsert[pair.Field.BSONName()] = pair.Value
+	}
+
+	if len(setOnInsert) == 0 {
+		return bson.M{}
+	}
+
+	return bson.M{"$setOnInsert": setOnInsert}
+}
+
 // UnsetUpdateFromFields builds an update document with $unset using schema fields.
 func UnsetUpdateFromFields(fields ...Field) bson.M {
 	unset := bson.M{}

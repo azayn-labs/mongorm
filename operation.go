@@ -54,6 +54,11 @@ func (o *MongORMOperations) fixUpdate() {
 		delete(o.update, "$set")
 	}
 
+	setOnInsert, ok := o.update["$setOnInsert"].(bson.M)
+	if ok && len(setOnInsert) == 0 {
+		delete(o.update, "$setOnInsert")
+	}
+
 	unset, ok := o.update["$unset"].(bson.M)
 	if ok && len(unset) == 0 {
 		delete(o.update, "$unset")

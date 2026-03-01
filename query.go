@@ -195,6 +195,96 @@ func (m *MongORM[T]) SetData(field any, value any) *MongORM[T] {
 	return m
 }
 
+// SetOnInsert adds fields and values to the $setOnInsert update document.
+// Values are only applied by MongoDB when an upsert operation inserts a new document.
+func (m *MongORM[T]) SetOnInsert(value *T) *MongORM[T] {
+	if value == nil {
+		return m
+	}
+
+	setOnInsert := bson.M{}
+	v := reflect.ValueOf(value).Elem()
+	t := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		fieldValue := v.Field(i)
+		fieldType := t.Field(i)
+		if !fieldValue.CanSet() {
+			continue
+		}
+
+		if doesModelIncludeAnyModelFlags(
+			t.Field(i).Tag,
+			string(ModelTagPrimary),
+			string(ModelTagReadonly),
+		) {
+			continue
+		}
+
+		if fieldValue.Kind() == reflect.Pointer {
+			if !fieldValue.IsNil() {
+				fieldName := m.info.fields[fieldType.Name].BSONName()
+				setOnInsert[fieldName] = fieldValue.Interface()
+			}
+			continue
+		}
+
+		if !fieldValue.IsZero() {
+			fieldName := m.info.fields[fieldType.Name].BSONName()
+			setOnInsert[fieldName] = fieldValue.Interface()
+		}
+	}
+
+	if len(setOnInsert) > 0 {
+		for fieldName := range setOnInsert {
+			m.markModified(fieldName)
+		}
+
+		if m.operations.update["$setOnInsert"] == nil {
+			if m.operations.update == nil {
+				m.operations.update = bson.M{}
+			}
+			m.operations.update["$setOnInsert"] = setOnInsert
+		} else {
+			currentSetOnInsert, ok := m.operations.update["$setOnInsert"].(bson.M)
+			if ok {
+				maps.Copy(currentSetOnInsert, setOnInsert)
+				m.operations.update["$setOnInsert"] = currentSetOnInsert
+			}
+		}
+	}
+
+	return m
+}
+
+// SetOnInsertData adds or overrides a single field/value in the current $setOnInsert
+// update document. It accepts a schema Field, so nested fields are supported via field paths.
+func (m *MongORM[T]) SetOnInsertData(field any, value any) *MongORM[T] {
+	fieldName := m.resolveFieldBSONName(field)
+	if fieldName == "" {
+		return m
+	}
+
+	if m.pathHasAnyModelTag(fieldName, ModelTagPrimary, ModelTagReadonly) {
+		return m
+	}
+
+	if m.operations.update == nil {
+		m.operations.update = bson.M{}
+	}
+
+	setOnInsert, ok := m.operations.update["$setOnInsert"].(bson.M)
+	if !ok || setOnInsert == nil {
+		setOnInsert = bson.M{}
+	}
+
+	setOnInsert[fieldName] = value
+	m.markModified(fieldName)
+	m.operations.update["$setOnInsert"] = setOnInsert
+
+	return m
+}
+
 // UnsetData adds or overrides a single field in the current $unset update document.
 // It accepts a schema Field, so nested fields are supported via field paths (for example:
 // `ToDoFields.User.Email` => `user.email`).

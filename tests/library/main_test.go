@@ -46,6 +46,14 @@ func TestMain(t *testing.T) {
 		TestSaveCreateWithSetMergesSchemaFields(t)
 	})
 
+	t.Run("Save create with SetOnInsert merges fields", func(t *testing.T) {
+		TestSaveCreateWithSetOnInsertMergesSchemaFields(t)
+	})
+
+	t.Run("Save upsert SetOnInsert insert and match noop", func(t *testing.T) {
+		TestSaveWithSetOnInsertUpsertInsertAndMatchNoop(t)
+	})
+
 	t.Run("Find TODO by ID", func(t *testing.T) {
 		FindLibraryTodoByID(t, toDo.ID)
 	})

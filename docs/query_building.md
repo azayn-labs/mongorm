@@ -239,6 +239,36 @@ update := &ToDo{Text: mongorm.String("New text")}
 orm.Where(ToDoFields.ID.Eq(id)).Set(update).Save(ctx)
 ```
 
+## SetOnInsert()
+
+`SetOnInsert()` adds fields to MongoDB `$setOnInsert`. Values are only written when an upsert inserts a new document.
+
+```go
+// Signature
+func (m *MongORM[T]) SetOnInsert(value *T) *MongORM[T]
+```
+
+Rules:
+
+- Only non-nil pointer fields and non-zero value fields are included.
+- The primary key field is always skipped.
+- `readonly` fields are always skipped.
+
+```go
+insertDefaults := &ToDo{Done: mongorm.Bool(false), Count: 1}
+orm.
+    WhereBy(ToDoFields.Text, "new-task").
+    SetOnInsert(insertDefaults).
+    Save(ctx)
+```
+
+Use `SetOnInsertData(field, value)` for direct field-based paths:
+
+```go
+orm.SetOnInsertData(ToDoFields.Text, "created-on-upsert")
+orm.SetOnInsertData(ToDoFields.User.Email, "john@example.com")
+```
+
 ## IncData() / DecData()
 
 Use `IncData()` for `$inc` updates and `DecData()` for decrement operations.

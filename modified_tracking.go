@@ -239,6 +239,12 @@ func (m *MongORM[T]) modifiedNewValue(path string, oldValue any) (any, bool) {
 		}
 	}
 
+	if setOnInsert, ok := update["$setOnInsert"].(bson.M); ok {
+		if value, exists := setOnInsert[path]; exists {
+			return value, true
+		}
+	}
+
 	if unset, ok := update["$unset"].(bson.M); ok {
 		if _, exists := unset[path]; exists {
 			return nil, true
