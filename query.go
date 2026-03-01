@@ -396,6 +396,28 @@ func (m *MongORM[T]) DecData(field any, value int64) *MongORM[T] {
 	return m.IncData(field, -value)
 }
 
+// IncFloat64Data increments a numeric field using MongoDB's $inc with a float64 delta.
+//
+// Example usage:
+//
+//	orm.Where(ToDoFields.ID.Eq(id)).IncFloat64Data(ToDoFields.Score, 1.25).Save(ctx)
+func (m *MongORM[T]) IncFloat64Data(field any, value float64) *MongORM[T] {
+	return m.IncData(field, value)
+}
+
+// DecFloat64Data decrements a numeric field using MongoDB's $inc with a negative float64 delta.
+//
+// Example usage:
+//
+//	orm.Where(ToDoFields.ID.Eq(id)).DecFloat64Data(ToDoFields.Score, 0.5).Save(ctx)
+func (m *MongORM[T]) DecFloat64Data(field any, value float64) *MongORM[T] {
+	if value < 0 {
+		value = -value
+	}
+
+	return m.IncData(field, -value)
+}
+
 // PushData adds or overrides a single field/value in the current $push update document.
 // It accepts a schema Field, so nested fields are supported via field paths.
 func (m *MongORM[T]) PushData(field any, value any) *MongORM[T] {

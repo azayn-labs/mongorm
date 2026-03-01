@@ -135,6 +135,7 @@ update := mongorm.SetOnInsertUpdateFromPairs(
 
 Use `IncData(field, value)` for MongoDB `$inc` updates.
 Use `DecData(field, amount)` for decrement operations.
+For float64 deltas, use `IncFloat64Data(field, value)` and `DecFloat64Data(field, amount)`.
 
 ```go
 orm.
@@ -145,6 +146,12 @@ orm.
 orm.
     WhereBy(ToDoFields.ID, targetID).
     DecData(ToDoFields.Count, 1).
+    Save(ctx)
+
+orm.
+    WhereBy(ToDoFields.ID, targetID).
+    IncFloat64Data(ToDoFields.Score, 1.25).
+    DecFloat64Data(ToDoFields.Score, 0.25).
     Save(ctx)
 ```
 

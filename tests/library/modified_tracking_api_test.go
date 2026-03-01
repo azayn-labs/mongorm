@@ -22,6 +22,7 @@ type trackingModel struct {
 	Email   *string              `bson:"email,omitempty"`
 	Secret  *string              `bson:"secret,omitempty" mongorm:"readonly"`
 	Count   int64                `bson:"count,omitempty"`
+	Price   float64              `bson:"price,omitempty"`
 	Profile *trackingProfile     `bson:"profile,omitempty"`
 	Items   *[]trackingArrayItem `bson:"items,omitempty"`
 
@@ -39,6 +40,7 @@ type trackingModelSchema struct {
 	Email   *primitives.StringField
 	Secret  *primitives.StringField
 	Count   *primitives.Int64Field
+	Price   *primitives.Float64Field
 	Profile *trackingProfileSchema
 }
 
@@ -159,6 +161,34 @@ func TestIncAndDecrementDataSkipPrimaryAndReadonly(t *testing.T) {
 
 	if m.IsModified(TrackingFields.ID) || m.IsModified(TrackingFields.Secret) {
 		t.Fatal("expected protected fields not to be marked as modified")
+	}
+}
+
+func TestIncAndDecrementFloat64DataTrackField(t *testing.T) {
+	m := mongorm.New(&trackingModel{Price: 10.5})
+
+	m.IncFloat64Data(TrackingFields.Price, 2.25)
+	oldValue, newValue, ok := m.ModifiedValue(TrackingFields.Price)
+	if !ok {
+		t.Fatal("expected price to be marked as modified after float increment")
+	}
+
+	if oldValue != float64(10.5) {
+		t.Fatalf("expected old value 10.5, got %v", oldValue)
+	}
+
+	if newValue != float64(12.75) {
+		t.Fatalf("expected new value 12.75, got %v", newValue)
+	}
+
+	m.DecFloat64Data(TrackingFields.Price, 0.5)
+	_, newValue, ok = m.ModifiedValue(TrackingFields.Price)
+	if !ok {
+		t.Fatal("expected price to remain modified after float decrement")
+	}
+
+	if newValue != float64(10.0) {
+		t.Fatalf("expected new value 10.0 after decrement, got %v", newValue)
 	}
 }
 

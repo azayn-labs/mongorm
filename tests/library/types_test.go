@@ -49,6 +49,19 @@ func ValidateTypesHelpers(t *testing.T) {
 		t.Fatal("expected 0 for nil int64 pointer")
 	}
 
+	price := mongorm.Float64(19.99)
+	if price == nil || *price != 19.99 {
+		t.Fatal("failed creating float64 pointer")
+	}
+
+	if v := mongorm.Float64Val(price); v != 19.99 {
+		t.Fatal("failed reading float64 pointer")
+	}
+
+	if v := mongorm.Float64Val(nil); v != 0 {
+		t.Fatal("expected 0 for nil float64 pointer")
+	}
+
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	stamp := mongorm.Timestamp(now)
 	if stamp == nil || !stamp.Equal(now) {

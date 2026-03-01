@@ -62,6 +62,24 @@ priority := mongorm.Int64Val(task.Priority) // 3
 nilPriority := mongorm.Int64Val(nil)        // 0
 ```
 
+### Float64 / Float64Val
+
+```go
+func Float64(f float64) *float64
+func Float64Val(f *float64) float64
+```
+
+Create a `*float64` or safely read its value (returns `0` for nil).
+
+```go
+product := &Product{
+    Price: mongorm.Float64(19.99),
+}
+
+price := mongorm.Float64Val(product.Price) // 19.99
+nilPrice := mongorm.Float64Val(nil)        // 0
+```
+
 ### Timestamp / TimestampVal
 
 ```go
@@ -89,6 +107,7 @@ nilDue := mongorm.TimestampVal(nil)       // time.Time{} zero value
 | `String(s string) *string` | `StringVal(s *string) string` | `""` |
 | `Bool(b bool) *bool` | `BoolVal(b *bool) bool` | `false` |
 | `Int64(i int64) *int64` | `Int64Val(i *int64) int64` | `0` |
+| `Float64(f float64) *float64` | `Float64Val(f *float64) float64` | `0` |
 | `Timestamp(t time.Time) *time.Time` | `TimestampVal(t *time.Time) time.Time` | `time.Time{}` |
 
 ## Model Output Helpers

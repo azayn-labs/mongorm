@@ -276,6 +276,10 @@ Use `IncData()` for `$inc` updates and `DecData()` for decrement operations.
 ```go
 orm.Where(ToDoFields.ID.Eq(id)).IncData(ToDoFields.Count, int64(2)).Save(ctx)
 orm.Where(ToDoFields.ID.Eq(id)).DecData(ToDoFields.Count, 1).Save(ctx)
+
+// float64 helpers
+orm.Where(ToDoFields.ID.Eq(id)).IncFloat64Data(ToDoFields.Score, 1.25).Save(ctx)
+orm.Where(ToDoFields.ID.Eq(id)).DecFloat64Data(ToDoFields.Score, 0.5).Save(ctx)
 ```
 
 ## Unset()

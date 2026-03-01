@@ -120,6 +120,36 @@ func Int64Val(i *int64) int64 {
 	return *i
 }
 
+// Float64 creates a pointer to a float64 value. This function is useful for creating
+// pointers to float values when defining schema structs for a MongORM instance.
+//
+// Example usage:
+//
+//	type Product struct {
+//	  Price *float64 `bson:"price"`
+//	}
+//	product := &Product{Price: mongorm.Float64(19.99)}
+func Float64(f float64) *float64 {
+	return &f
+}
+
+// Float64Val retrieves the value from a pointer to a float64. If the pointer is nil, it
+// returns 0. This function is useful for safely accessing optional float64 fields.
+//
+// Example usage:
+//
+//	type Product struct {
+//	  Price *float64 `bson:"price"`
+//	}
+//	product := &Product{Price: mongorm.Float64(19.99)}
+//	priceValue := mongorm.Float64Val(product.Price) // priceValue will be 19.99
+func Float64Val(f *float64) float64 {
+	if f == nil {
+		return 0
+	}
+	return *f
+}
+
 // Timestamp creates a pointer to a time.Time value. This function is useful for creating
 // pointers to time values when defining the schema struct for a MongORM instance, allowing you
 // to easily manage timestamp fields in your documents.
