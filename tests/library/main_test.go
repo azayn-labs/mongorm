@@ -54,6 +54,10 @@ func TestMain(t *testing.T) {
 		TestSaveWithSetOnInsertUpsertInsertAndMatchNoop(t)
 	})
 
+	t.Run("Save merges schema filters on update", func(t *testing.T) {
+		TestSaveUsesSchemaFiltersForUpdate(t)
+	})
+
 	t.Run("Find TODO by ID", func(t *testing.T) {
 		FindLibraryTodoByID(t, toDo.ID)
 	})

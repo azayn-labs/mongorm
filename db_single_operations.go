@@ -102,18 +102,14 @@ func (m *MongORM[T]) Save(
 	hasExplicitUpdate := len(m.operations.update) > 0
 	m.clearModified()
 
-	filter, id, err := m.withPrimaryFilters()
+	filter, id, err := m.withPrimaryAndSchemaFilters()
 	if err != nil {
 		return err
 	}
 
 	hasSelector := len(filter) > 0
-	fullQuery, err := m.GetResolvedRawQuery()
-	if err != nil {
-		return err
-	}
 
-	if hasSelector && (hasExplicitUpdate || len(m.operations.query) > 0 || len(fullQuery) > 0) {
+	if hasSelector && (hasExplicitUpdate || len(m.operations.query) > 0) {
 		m.operations.fixUpdate()
 		m.rebuildModifiedFromUpdate(m.operations.update)
 
